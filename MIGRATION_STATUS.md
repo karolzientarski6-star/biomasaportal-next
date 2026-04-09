@@ -27,23 +27,19 @@
 - `npm run build` passes
 - WordPress export completed successfully
 - Supabase credentials are loaded locally
+- Supabase schema applied successfully
+- Supabase import completed successfully
+- Imported into Supabase:
+  - `5` profiles
+  - `13` classified categories
+  - `24` classifieds with mapped owners
 
-## Current blocker
+## Current focus
 
-The Supabase schema has not been applied yet.
+Now that data and users are in Supabase, the next implementation steps are:
 
-Current import error:
-
-`Could not find the table 'public.classified_categories' in the schema cache`
-
-## Immediate next step
-
-Apply `supabase/schema.sql` in the Supabase SQL editor or provide a direct Postgres connection string.
-
-Once that is done:
-
-1. run `npm run import:supabase`
-2. verify imported classifieds/categories
-3. connect real create/update/delete flows
-4. connect Stripe checkout + webhook in Next.js
-5. migrate media/upload flow to Supabase Storage
+1. connect real create/update/delete flows for classifieds
+2. add media upload flow to Supabase Storage
+3. implement Stripe checkout + webhook in Next.js
+4. move archive/single classifieds from mirrored HTML to native data-driven components
+5. prepare Vercel envs and final production cutover

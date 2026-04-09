@@ -60,11 +60,82 @@ async function importCategories() {
   return new Map(data.map((row) => [row.wp_term_id, row.id]));
 }
 
-async function importClassifieds(categoryIdMap) {
+async function ensureAuthUsers() {
+  const wpUsers = await readJson("wp-users.json");
+  const authIdByWpId = new Map();
+
+  const { data: listedUsers, error: listError } = await supabase.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+
+  if (listError) {
+    throw listError;
+  }
+
+  const existingByEmail = new Map(
+    (listedUsers.users ?? [])
+      .filter((user) => user.email)
+      .map((user) => [user.email.toLowerCase(), user]),
+  );
+
+  for (const wpUser of wpUsers) {
+    const email = String(wpUser.user_email).toLowerCase();
+    let authUser = existingByEmail.get(email);
+
+    if (!authUser) {
+      const { data: created, error: createError } = await supabase.auth.admin.createUser({
+        email,
+        password: `Migracja!${wpUser.ID}${Math.random().toString(36).slice(2, 10)}`,
+        email_confirm: true,
+        user_metadata: {
+          display_name: wpUser.display_name,
+          wp_user_id: Number(wpUser.ID),
+          wp_login: wpUser.user_login,
+          wp_roles: wpUser.roles,
+        },
+      });
+
+      if (createError) {
+        throw createError;
+      }
+
+      authUser = created.user;
+      existingByEmail.set(email, authUser);
+    }
+
+    authIdByWpId.set(Number(wpUser.ID), authUser.id);
+  }
+
+  const profileRows = wpUsers
+    .map((wpUser) => {
+      const authId = authIdByWpId.get(Number(wpUser.ID));
+      if (!authId) return null;
+      return {
+        id: authId,
+        email: String(wpUser.user_email).toLowerCase(),
+        display_name: wpUser.display_name || wpUser.user_login,
+      };
+    })
+    .filter(Boolean);
+
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .upsert(profileRows, { onConflict: "id" });
+
+  if (profileError) {
+    throw profileError;
+  }
+
+  return authIdByWpId;
+}
+
+async function importClassifieds(categoryIdMap, authIdByWpId) {
   const classifieds = await readJson("classifieds.json");
 
   const rows = classifieds.map((item) => ({
     wp_post_id: item.id,
+    owner_id: authIdByWpId.get(Number(String(item.author || "").replace("user-", ""))) ?? null,
     title: item.title,
     slug: item.slug || `${slugify(item.title)}-${item.id}`,
     description_html: `<p>${item.excerpt || item.title}</p>`,
@@ -135,12 +206,13 @@ async function main() {
   categories.forEach((category) => categoriesByName.set(category.name, category.id));
 
   const categoryIdMap = await importCategories();
+  const authIdByWpId = await ensureAuthUsers();
 
   for (const [name, wpTermId] of categoriesByName.entries()) {
     categoriesByName.set(name, categoryIdMap.get(wpTermId));
   }
 
-  await importClassifieds(categoryIdMap);
+  await importClassifieds(categoryIdMap, authIdByWpId);
 
   console.log("Supabase import completed.");
 }
