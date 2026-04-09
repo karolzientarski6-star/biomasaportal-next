@@ -13,9 +13,7 @@ export function SignInPage() {
           <div className="page-card__header">
             <p className="page-card__eyebrow">Logowanie</p>
             <h1>Zaloguj się</h1>
-            <p>
-              Nowy ekran logowania do panelu ogłoszeń pod Supabase Auth.
-            </p>
+            <p>Panel logowania do kont użytkowników i zarządzania ogłoszeniami.</p>
           </div>
           <div className="page-card__body">
             <div className={supabaseReady ? "status-banner" : "status-banner warn"}>

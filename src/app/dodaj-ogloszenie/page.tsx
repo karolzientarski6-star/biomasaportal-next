@@ -1,11 +1,25 @@
 import type { Metadata } from "next";
-import { ClassifiedForm } from "@/components/classified-form";
+import { MirrorTemplatePage } from "@/components/mirror-template-page";
+import { WordPressClassifiedForm } from "@/components/wordpress-classified-form";
+import { getClassifiedCategories, getRouteMetadata } from "@/lib/wordpress-export";
 
-export const metadata: Metadata = {
-  title: "Dodaj ogłoszenie",
-  description: "Dodaj ogłoszenie biomasy lub maszyn leśnych na BiomasaPortal.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return getRouteMetadata("/dodaj-ogloszenie/");
+}
 
-export default function AddClassifiedPage() {
-  return <ClassifiedForm />;
+export default async function AddClassifiedPage() {
+  const categories = await getClassifiedCategories();
+
+  return (
+    <MirrorTemplatePage
+      path="/dodaj-ogloszenie/"
+      slots={[
+        {
+          selector: "form#biomasa-ogloszenie-form",
+          slotId: "add-classified-form",
+          node: <WordPressClassifiedForm categories={categories} />,
+        },
+      ]}
+    />
+  );
 }

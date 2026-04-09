@@ -56,13 +56,60 @@ function metaDescriptionFromHead($) {
   return $('meta[name="description"]').attr("content")?.trim() ?? "";
 }
 
+function canonicalUrlFromHead($) {
+  return $("link[rel='canonical']").attr("href")?.trim() ?? "";
+}
+
+function robotsFromHead($) {
+  return $('meta[name="robots"]').attr("content")?.trim() ?? "";
+}
+
+function openGraphFromHead($) {
+  return {
+    title: $('meta[property="og:title"]').attr("content")?.trim() ?? "",
+    description:
+      $('meta[property="og:description"]').attr("content")?.trim() ?? "",
+    type: $('meta[property="og:type"]').attr("content")?.trim() ?? "",
+    url: $('meta[property="og:url"]').attr("content")?.trim() ?? "",
+    image: $('meta[property="og:image"]').attr("content")?.trim() ?? "",
+    siteName: $('meta[property="og:site_name"]').attr("content")?.trim() ?? "",
+    locale: $('meta[property="og:locale"]').attr("content")?.trim() ?? "",
+  };
+}
+
+function twitterCardFromHead($) {
+  return $('meta[name="twitter:card"]').attr("content")?.trim() ?? "";
+}
+
+function schemaJsonLdFromHead($) {
+  return $("script[type='application/ld+json']")
+    .map((_, element) => $(element).html()?.trim())
+    .get()
+    .filter(Boolean);
+}
+
 function stylesheetsFromDocument($) {
-  return [...new Set(
-    $("link[rel='stylesheet']")
-      .map((_, element) => $(element).attr("href"))
-      .get()
-      .filter(Boolean),
-  )];
+  return [
+    ...new Set(
+      $("link[rel='stylesheet']")
+        .map((_, element) => $(element).attr("href"))
+        .get()
+        .filter(Boolean),
+    ),
+  ];
+}
+
+function paginationLinksFromDocument($) {
+  return [
+    ...new Set(
+      $("a[href]")
+        .map((_, element) => $(element).attr("href"))
+        .get()
+        .filter(Boolean)
+        .filter((href) => href.startsWith(SITE_URL))
+        .filter((href) => /\/page\/\d+\/?$/.test(new URL(href).pathname)),
+    ),
+  ];
 }
 
 async function getSitemapUrls(sitemapUrl) {
@@ -94,11 +141,20 @@ async function getAllPageUrls() {
 }
 
 async function exportRoutes() {
-  const urls = await getAllPageUrls();
+  const queue = [...(await getAllPageUrls())];
+  const visited = new Set();
   const manifest = [];
   const skipped = [];
 
-  for (const url of urls) {
+  while (queue.length > 0) {
+    const url = queue.shift();
+
+    if (!url || visited.has(url)) {
+      continue;
+    }
+
+    visited.add(url);
+
     try {
       const html = await fetchText(url);
       const $ = load(html);
@@ -108,6 +164,11 @@ async function exportRoutes() {
         url,
         title: titleFromHead($),
         metaDescription: metaDescriptionFromHead($),
+        canonicalUrl: canonicalUrlFromHead($),
+        robots: robotsFromHead($),
+        openGraph: openGraphFromHead($),
+        twitterCard: twitterCardFromHead($),
+        schemaJsonLd: schemaJsonLdFromHead($),
         html: body,
         bodyClass: $("body").attr("class") ?? "",
         stylesheets: stylesheetsFromDocument($),
@@ -120,6 +181,13 @@ async function exportRoutes() {
         JSON.stringify(record, null, 2),
         "utf8",
       );
+
+      for (const paginationUrl of paginationLinksFromDocument($)) {
+        if (!visited.has(paginationUrl)) {
+          queue.push(paginationUrl);
+        }
+      }
+
       manifest.push({
         path: record.path,
         file,

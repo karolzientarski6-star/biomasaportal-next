@@ -13,6 +13,7 @@ export function SignUpForm({ origin }: SignUpFormProps) {
   return (
     <form action={action} className="form-grid">
       <input type="hidden" name="origin" value={origin} />
+      <input type="hidden" name="terms" value="accepted" />
 
       <div className="form-field">
         <label htmlFor="register-email">Adres email</label>

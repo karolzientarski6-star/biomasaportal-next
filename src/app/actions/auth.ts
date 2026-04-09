@@ -10,6 +10,7 @@ const signUpSchema = z
     email: z.email("Podaj poprawny adres email."),
     password: z.string().min(8, "Hasło musi mieć minimum 8 znaków."),
     passwordConfirm: z.string().min(8, "Powtórz hasło."),
+    terms: z.string().min(1, "Zaakceptuj politykę prywatności i regulamin."),
   })
   .refine((data) => data.password === data.passwordConfirm, {
     message: "Hasła muszą być identyczne.",
@@ -33,12 +34,16 @@ export async function signUpAction(
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
-    passwordConfirm: formData.get("passwordConfirm"),
+    passwordConfirm:
+      formData.get("passwordConfirm") ?? formData.get("password_confirm"),
+    terms: formData.get("terms"),
   });
 
   if (!parsed.success) {
     return {
-      error: parsed.error.issues[0]?.message ?? "Nie udało się przetworzyć formularza.",
+      error:
+        parsed.error.issues[0]?.message ??
+        "Nie udało się przetworzyć formularza.",
     };
   }
 
@@ -78,7 +83,9 @@ export async function signInAction(
 
   if (!parsed.success) {
     return {
-      error: parsed.error.issues[0]?.message ?? "Nie udało się przetworzyć formularza.",
+      error:
+        parsed.error.issues[0]?.message ??
+        "Nie udało się przetworzyć formularza.",
     };
   }
 

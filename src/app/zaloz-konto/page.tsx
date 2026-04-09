@@ -1,11 +1,32 @@
 import type { Metadata } from "next";
-import { RegistrationPage } from "@/components/registration-page";
+import { headers } from "next/headers";
+import { MirrorTemplatePage } from "@/components/mirror-template-page";
+import { WordPressRegistrationForm } from "@/components/wordpress-registration-form";
+import { getRouteMetadata } from "@/lib/wordpress-export";
 
-export const metadata: Metadata = {
-  title: "Załóż konto",
-  description: "Załóż konto na BiomasaPortal i zarządzaj ogłoszeniami z własnego panelu.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return getRouteMetadata("/zaloz-konto/");
+}
 
-export default function SignUpPage() {
-  return <RegistrationPage />;
+export default async function SignUpPage() {
+  const headerStore = await headers();
+  const host =
+    headerStore.get("x-forwarded-host") ??
+    headerStore.get("host") ??
+    "localhost:3000";
+  const protocol = headerStore.get("x-forwarded-proto") ?? "http";
+  const origin = `${protocol}://${host}`;
+
+  return (
+    <MirrorTemplatePage
+      path="/zaloz-konto/"
+      slots={[
+        {
+          selector: "form#biomasa-registration-form",
+          slotId: "register-form",
+          node: <WordPressRegistrationForm origin={origin} />,
+        },
+      ]}
+    />
+  );
 }

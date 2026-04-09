@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MirrorPage } from "@/components/mirror-page";
-import { getRouteByPath } from "@/lib/wordpress-export";
+import { buildRouteMetadata, getRouteByPath } from "@/lib/wordpress-export";
 
 type ClassifiedSingleProps = {
   params: Promise<{ slug: string }>;
@@ -17,13 +17,7 @@ export async function generateMetadata({
     return {};
   }
 
-  return {
-    title: route.title,
-    description: route.metaDescription,
-    alternates: {
-      canonical: route.path,
-    },
-  };
+  return buildRouteMetadata(route);
 }
 
 export default async function ClassifiedSinglePage({

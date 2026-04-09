@@ -1,11 +1,23 @@
 import type { Metadata } from "next";
-import { UserDashboard } from "@/components/user-dashboard";
+import { MirrorTemplatePage } from "@/components/mirror-template-page";
+import { WordPressDashboardSlot } from "@/components/wordpress-dashboard-slot";
+import { getRouteMetadata } from "@/lib/wordpress-export";
 
-export const metadata: Metadata = {
-  title: "Moje ogłoszenia",
-  description: "Panel użytkownika do zarządzania ogłoszeniami na BiomasaPortal.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return getRouteMetadata("/moje-ogloszenia/");
+}
 
 export default function MyClassifiedsPage() {
-  return <UserDashboard />;
+  return (
+    <MirrorTemplatePage
+      path="/moje-ogloszenia/"
+      slots={[
+        {
+          selector: ".elementor-shortcode",
+          slotId: "dashboard-slot",
+          node: <WordPressDashboardSlot />,
+        },
+      ]}
+    />
+  );
 }

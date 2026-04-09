@@ -3,11 +3,9 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://biomasaportal.pl"),
-  title: {
-    default: "BiomasaPortal",
-    template: "%s | BiomasaPortal",
-  },
-  description: "Portal o polskiej biomasie, ogłoszeniach i rynku maszyn leśnych.",
+  title: "BiomasaPortal",
+  description:
+    "BiomasaPortal - źródło informacji o rynku biomasy, ogłoszeniach i maszynach leśnych.",
 };
 
 export default function RootLayout({
