@@ -1,0 +1,93 @@
+[
+  {
+    "id": 96,
+    "name": "Kora",
+    "slug": "kora",
+    "count": 2,
+    "parent": 0
+  },
+  {
+    "id": 104,
+    "name": "Maszyny leśne",
+    "slug": "maszyny-lesne",
+    "count": 2,
+    "parent": 0
+  },
+  {
+    "id": 98,
+    "name": "Pellet",
+    "slug": "pellet",
+    "count": 0,
+    "parent": 0
+  },
+  {
+    "id": 99,
+    "name": "Pellet A1",
+    "slug": "pellet-a1",
+    "count": 3,
+    "parent": 98
+  },
+  {
+    "id": 100,
+    "name": "Pellet przemysłowy",
+    "slug": "pellet-przemyslowy",
+    "count": 2,
+    "parent": 98
+  },
+  {
+    "id": 101,
+    "name": "Pellet ze słomy",
+    "slug": "pellet-ze-slomy",
+    "count": 2,
+    "parent": 98
+  },
+  {
+    "id": 102,
+    "name": "Pellet ze słonecznika",
+    "slug": "pellet-ze-slonecznika",
+    "count": 1,
+    "parent": 98
+  },
+  {
+    "id": 103,
+    "name": "PKS",
+    "slug": "pks",
+    "count": 3,
+    "parent": 0
+  },
+  {
+    "id": 95,
+    "name": "Trociny",
+    "slug": "trociny",
+    "count": 3,
+    "parent": 0
+  },
+  {
+    "id": 92,
+    "name": "Zrębka drzewna",
+    "slug": "zrebka-drzewna",
+    "count": 0,
+    "parent": 0
+  },
+  {
+    "id": 93,
+    "name": "Zrębka leśna",
+    "slug": "zrebka-lesna",
+    "count": 2,
+    "parent": 92
+  },
+  {
+    "id": 94,
+    "name": "Zrębka tartaczna",
+    "slug": "zrebka-tartaczna",
+    "count": 3,
+    "parent": 92
+  },
+  {
+    "id": 97,
+    "name": "Zrzyny",
+    "slug": "zrzyny",
+    "count": 1,
+    "parent": 0
+  }
+]
