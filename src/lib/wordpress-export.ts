@@ -7,6 +7,8 @@ export type ExportedRoute = {
   title: string;
   metaDescription: string;
   html: string;
+  bodyClass: string;
+  stylesheets: string[];
   exportedAt: string;
   source: string;
 };

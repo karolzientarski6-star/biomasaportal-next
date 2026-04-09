@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ClassifiedArchive } from "@/components/classified-archive";
+import { MirrorPage } from "@/components/mirror-page";
 
 export const metadata: Metadata = {
   title: "Ogłoszenia",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function ClassifiedArchivePage() {
-  return <ClassifiedArchive />;
+  return <MirrorPage path="/ogloszenia/" />;
 }

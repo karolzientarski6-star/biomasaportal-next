@@ -56,6 +56,15 @@ function metaDescriptionFromHead($) {
   return $('meta[name="description"]').attr("content")?.trim() ?? "";
 }
 
+function stylesheetsFromDocument($) {
+  return [...new Set(
+    $("link[rel='stylesheet']")
+      .map((_, element) => $(element).attr("href"))
+      .get()
+      .filter(Boolean),
+  )];
+}
+
 async function getSitemapUrls(sitemapUrl) {
   const xml = await fetchText(sitemapUrl);
   return [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
@@ -100,6 +109,8 @@ async function exportRoutes() {
         title: titleFromHead($),
         metaDescription: metaDescriptionFromHead($),
         html: body,
+        bodyClass: $("body").attr("class") ?? "",
+        stylesheets: stylesheetsFromDocument($),
         exportedAt: new Date().toISOString(),
         source: "wordpress-html",
       };

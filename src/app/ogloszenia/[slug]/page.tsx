@@ -36,5 +36,5 @@ export default async function ClassifiedSinglePage({
     notFound();
   }
 
-  return <MirrorPage path={route.path} route={route} eyebrow="Ogłoszenie" />;
+  return <MirrorPage path={route.path} route={route} />;
 }
