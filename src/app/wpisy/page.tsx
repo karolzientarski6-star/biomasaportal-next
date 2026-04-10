@@ -2,19 +2,16 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BlogArchiveGrid } from "@/components/blog-archive-grid";
 import { MirrorTemplatePage } from "@/components/mirror-template-page";
-import { buildEditorialArchiveMetadata } from "@/lib/editorial";
+import { extractElementorPostsWidgetSignatures } from "@/lib/elementor-posts-widget";
 import { getCombinedBlogIndex } from "@/lib/blog-index";
-import { getRouteByPath } from "@/lib/wordpress-export";
+import { buildRouteMetadata, getRouteByPath } from "@/lib/wordpress-export";
 
 const TEMPLATE_PATH = "/wpisy/";
 const POSTS_PER_PAGE = 12;
 
 export async function generateMetadata(): Promise<Metadata> {
-  return buildEditorialArchiveMetadata(
-    "Wpisy o biomasie, pellecie i rynku drzewnym | BiomasaPortal",
-    "Archiwum wpisow BiomasaPortal: pellet, biogazownie, dofinansowania, maszyny lesne i rynek biomasy w Polsce.",
-    "/wpisy/",
-  );
+  const route = await getRouteByPath(TEMPLATE_PATH);
+  return route ? buildRouteMetadata(route) : {};
 }
 
 export default async function BlogArchivePage() {
@@ -27,6 +24,9 @@ export default async function BlogArchivePage() {
     notFound();
   }
 
+  const mainWidgetSignature =
+    extractElementorPostsWidgetSignatures(templateRoute.html)[0] ?? null;
+
   return (
     <MirrorTemplatePage
       path="/wpisy/"
@@ -38,11 +38,11 @@ export default async function BlogArchivePage() {
           node: (
             <BlogArchiveGrid
               items={items}
-              title="Wpisy"
-              intro="Aktualnosci, poradniki i analizy rynku biomasy w Polsce."
               currentPage={1}
               perPage={POSTS_PER_PAGE}
               basePath="/wpisy/"
+              widgetSignature={mainWidgetSignature}
+              showSummary={false}
             />
           ),
         },

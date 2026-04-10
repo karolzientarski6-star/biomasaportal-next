@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BlogArchiveGrid } from "@/components/blog-archive-grid";
 import { MirrorTemplatePage } from "@/components/mirror-template-page";
+import { extractElementorPostsWidgetSignatures } from "@/lib/elementor-posts-widget";
 import { buildEditorialArchiveMetadata } from "@/lib/editorial";
 import { getCombinedBlogIndex } from "@/lib/blog-index";
 import { getRouteByPath } from "@/lib/wordpress-export";
@@ -59,6 +60,9 @@ export default async function BlogArchivePaginationPage({
     notFound();
   }
 
+  const mainWidgetSignature =
+    extractElementorPostsWidgetSignatures(templateRoute.html)[0] ?? null;
+
   return (
     <MirrorTemplatePage
       path={`/wpisy/page/${page}/`}
@@ -70,11 +74,11 @@ export default async function BlogArchivePaginationPage({
           node: (
             <BlogArchiveGrid
               items={items}
-              title="Wpisy"
-              intro="Aktualnosci, poradniki i analizy rynku biomasy w Polsce."
               currentPage={page}
               perPage={POSTS_PER_PAGE}
               basePath="/wpisy/"
+              widgetSignature={mainWidgetSignature}
+              showSummary={false}
             />
           ),
         },

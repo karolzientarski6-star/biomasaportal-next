@@ -44,3 +44,4 @@ next-env.d.ts
 
 # local project notes with credentials
 docs/*.local.md
+start-*.log

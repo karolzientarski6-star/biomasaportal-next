@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { BlogArchiveGrid } from "@/components/blog-archive-grid";
 import { EditorialCategoryHub } from "@/components/editorial-category-hub";
 import { MirrorTemplatePage } from "@/components/mirror-template-page";
+import { extractElementorPostsWidgetSignatures } from "@/lib/elementor-posts-widget";
 import { buildEditorialArchiveMetadata } from "@/lib/editorial";
 import { getCombinedBlogIndex } from "@/lib/blog-index";
 import { EDITORIAL_CATEGORIES } from "@/lib/editorial-categories";
@@ -27,6 +28,9 @@ export default async function BiomasaInPolandPage() {
   if (!templateRoute) {
     notFound();
   }
+
+  const mainWidgetSignature =
+    extractElementorPostsWidgetSignatures(templateRoute.html)[0] ?? null;
 
   const categories = EDITORIAL_CATEGORIES.map((category) => ({
     category,
@@ -55,6 +59,7 @@ export default async function BiomasaInPolandPage() {
               currentPage={1}
               perPage={12}
               basePath="/wpisy/"
+              widgetSignature={mainWidgetSignature}
             />
           ),
         },

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BlogArchiveGrid } from "@/components/blog-archive-grid";
 import { MirrorTemplatePage } from "@/components/mirror-template-page";
+import { extractElementorPostsWidgetSignatures } from "@/lib/elementor-posts-widget";
 import { buildEditorialArchiveMetadata } from "@/lib/editorial";
 import { getBlogIndexByCategory } from "@/lib/blog-index";
 import { getEditorialCategoryBySlug } from "@/lib/editorial-categories";
@@ -66,6 +67,9 @@ export default async function EditorialCategoryPage({
     notFound();
   }
 
+  const mainWidgetSignature =
+    extractElementorPostsWidgetSignatures(templateRoute.html)[0] ?? null;
+
   return (
     <MirrorTemplatePage
       path={`/biomasa-w-polsce/${category.slug}/`}
@@ -93,6 +97,7 @@ export default async function EditorialCategoryPage({
               perPage={POSTS_PER_PAGE}
               basePath={`/biomasa-w-polsce/${category.slug}/`}
               category={category}
+              widgetSignature={mainWidgetSignature}
             />
           ),
         },

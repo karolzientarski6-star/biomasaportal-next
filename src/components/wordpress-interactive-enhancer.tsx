@@ -271,6 +271,19 @@ function setupBlogSearch(root: ParentNode, path: string) {
   }
 
   const originalHtml = postsContainer.innerHTML;
+  const updateSearchUrl = (query: string) => {
+    const currentUrl = new URL(window.location.href);
+    const normalized = query.trim();
+
+    if (normalized) {
+      currentUrl.searchParams.set("s", normalized);
+    } else {
+      currentUrl.searchParams.delete("s");
+    }
+
+    window.history.replaceState({}, "", `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
+  };
+
   searchForm.dataset.analyticsForm = "search";
   searchForm.dataset.analyticsLabel = "Wyszukiwarka wpisow";
   searchForm.setAttribute("action", path);
@@ -295,6 +308,7 @@ function setupBlogSearch(root: ParentNode, path: string) {
     if (!normalized) {
       postsContainer.innerHTML = originalHtml;
       resultsNotice.textContent = "";
+      updateSearchUrl("");
       window.dispatchEvent(new Event("codex:aos-refresh"));
       return;
     }
@@ -315,6 +329,7 @@ function setupBlogSearch(root: ParentNode, path: string) {
       const payload = (await response.json()) as BlogSearchPayload;
       renderSearchResults(postsContainer, template, payload.results);
       resultsNotice.textContent = `Znaleziono ${payload.totalResults} wpis\u00f3w dla: "${normalized}"`;
+      updateSearchUrl(payload.query || normalized);
       window.dispatchEvent(
         new CustomEvent("biomasa:site-search", {
           detail: {
@@ -360,7 +375,26 @@ function setupBlogSearch(root: ParentNode, path: string) {
       }, 220);
     });
 
+    searchInput.addEventListener("change", () => {
+      void runSearch(searchInput.value);
+    });
+
+    searchInput.addEventListener("search", () => {
+      void runSearch(searchInput.value);
+    });
+
     searchForm.dataset.codexSearchBound = "true";
+  }
+
+  const initialQuery = new URL(window.location.href).searchParams.get("s");
+  if (initialQuery && initialQuery !== searchInput.value) {
+    searchInput.value = initialQuery;
+    void runSearch(initialQuery);
+  }
+
+  if (!searchWidget.dataset.codexSearchWarmed) {
+    searchWidget.dataset.codexSearchWarmed = "true";
+    void fetch("/api/blog-search?warm=1", { keepalive: true }).catch(() => undefined);
   }
 }
 
