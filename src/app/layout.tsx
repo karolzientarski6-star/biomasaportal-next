@@ -3,6 +3,8 @@ import "aos/dist/aos.css";
 import { Suspense } from "react";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { AnimationProvider } from "@/components/animation-provider";
+import { ConsentProvider } from "@/components/consent-provider";
+import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { PageTransition } from "@/components/page-transition";
 import "./globals.css";
 
@@ -21,11 +23,14 @@ export default function RootLayout({
   return (
     <html lang="pl">
       <body>
-        <Suspense fallback={null}>
-          <AnalyticsProvider />
-        </Suspense>
-        <AnimationProvider />
-        <PageTransition>{children}</PageTransition>
+        <ConsentProvider>
+          <Suspense fallback={null}>
+            <AnalyticsProvider />
+          </Suspense>
+          <AnimationProvider />
+          <PageTransition>{children}</PageTransition>
+          <CookieConsentBanner />
+        </ConsentProvider>
       </body>
     </html>
   );

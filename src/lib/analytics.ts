@@ -1,3 +1,11 @@
+import {
+  createConsentPreferences,
+  deserializeConsentPreferences,
+  readConsentCookie,
+  CONSENT_STORAGE_KEY,
+  type ConsentPreferences,
+} from "@/lib/consent";
+
 export const DEFAULT_GA_MEASUREMENT_ID = "G-RGSK5S613J";
 
 type AnalyticsPrimitive = string | number | boolean | null | undefined;
@@ -13,6 +21,8 @@ declare global {
   interface Window {
     dataLayer: unknown[];
     gtag?: (...args: unknown[]) => void;
+    __biomasaConsent?: ConsentPreferences;
+    __biomasaConsentPersisted?: boolean;
   }
 }
 
@@ -36,11 +46,46 @@ export function getGaMeasurementId() {
   return process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || DEFAULT_GA_MEASUREMENT_ID;
 }
 
+export function getBrowserConsentState() {
+  if (typeof window === "undefined") {
+    return createConsentPreferences();
+  }
+
+  if (window.__biomasaConsent) {
+    return window.__biomasaConsent;
+  }
+
+  let localValue: string | null = null;
+  try {
+    localValue = window.localStorage.getItem(CONSENT_STORAGE_KEY);
+  } catch {
+    localValue = null;
+  }
+  const localConsent = deserializeConsentPreferences(localValue);
+  if (localConsent) {
+    window.__biomasaConsent = localConsent;
+    return localConsent;
+  }
+
+  const cookieConsent = deserializeConsentPreferences(readConsentCookie(document.cookie));
+  if (cookieConsent) {
+    window.__biomasaConsent = cookieConsent;
+    return cookieConsent;
+  }
+
+  return createConsentPreferences();
+}
+
+export function hasAnalyticsConsent() {
+  return getBrowserConsentState().analytics;
+}
+
 export function canTrackAnalytics(measurementId?: string | null) {
   return Boolean(
     measurementId &&
       typeof window !== "undefined" &&
-      typeof window.gtag === "function",
+      typeof window.gtag === "function" &&
+      hasAnalyticsConsent(),
   );
 }
 

@@ -8,6 +8,12 @@ import {
   trackEvent,
   trackPageView,
 } from "@/lib/analytics";
+import {
+  CONSENT_COOKIE_NAME,
+  CONSENT_STORAGE_KEY,
+  createConsentPreferences,
+  toGoogleConsentState,
+} from "@/lib/consent";
 
 type AnalyticsProviderProps = {
   measurementId?: string;
@@ -18,6 +24,10 @@ type SiteSearchDetail = {
   query?: string;
   resultsCount?: number;
   totalResults?: number;
+};
+
+type ConsentUpdateDetail = {
+  analytics?: boolean;
 };
 
 const FILE_DOWNLOAD_PATTERN =
@@ -193,6 +203,82 @@ function trackPageSpecificEvents(pathname: string, measurementId: string) {
       measurementId,
     );
   }
+}
+
+function getConsentBootstrapScript() {
+  const defaultConsent = JSON.stringify(
+    toGoogleConsentState(createConsentPreferences(), "default"),
+  );
+  const storageKey = JSON.stringify(CONSENT_STORAGE_KEY);
+  const cookieName = JSON.stringify(CONSENT_COOKIE_NAME);
+
+  return `
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function(){window.dataLayer.push(arguments);};
+    (function() {
+      var storageKey = ${storageKey};
+      var cookieName = ${cookieName};
+      function createConsent(base) {
+        return {
+          necessary: true,
+          analytics: !!(base && base.analytics),
+          functionality: !!(base && base.functionality),
+          personalization: !!(base && base.personalization),
+          marketing: !!(base && base.marketing),
+          updatedAt: base && typeof base.updatedAt === "string" ? base.updatedAt : new Date().toISOString(),
+          source: base && typeof base.source === "string" ? base.source : "stored"
+        };
+      }
+      function parseStored(value) {
+        if (!value) return null;
+        try {
+          return createConsent(JSON.parse(value));
+        } catch (error) {
+          return null;
+        }
+      }
+      function readCookie(name) {
+        var match = document.cookie
+          .split(";")
+          .map(function(entry) { return entry.trim(); })
+          .find(function(entry) { return entry.indexOf(name + "=") === 0; });
+        if (!match) return null;
+        try {
+          return decodeURIComponent(match.slice(name.length + 1));
+        } catch (error) {
+          return match.slice(name.length + 1);
+        }
+      }
+      function readLocalStorage(name) {
+        try {
+          return window.localStorage.getItem(name);
+        } catch (error) {
+          return null;
+        }
+      }
+      function toGoogleState(preferences) {
+        return {
+          ad_storage: preferences.marketing ? "granted" : "denied",
+          ad_user_data: preferences.marketing ? "granted" : "denied",
+          ad_personalization: preferences.marketing ? "granted" : "denied",
+          analytics_storage: preferences.analytics ? "granted" : "denied",
+          functionality_storage: preferences.functionality ? "granted" : "denied",
+          personalization_storage: preferences.personalization ? "granted" : "denied",
+          security_storage: "granted"
+        };
+      }
+      var localConsent = parseStored(readLocalStorage(storageKey));
+      var cookieConsent = parseStored(readCookie(cookieName));
+      var storedConsent = localConsent || cookieConsent;
+      var consent = storedConsent || createConsent();
+      window.__biomasaConsent = consent;
+      window.__biomasaConsentPersisted = !!storedConsent;
+      window.gtag("consent", "default", ${defaultConsent});
+      if (storedConsent) {
+        window.gtag("consent", "update", toGoogleState(consent));
+      }
+    })();
+  `;
 }
 
 export function AnalyticsProvider({
@@ -498,6 +584,20 @@ export function AnalyticsProvider({
       );
     };
 
+    const onConsentUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<ConsentUpdateDetail>;
+      if (!customEvent.detail?.analytics) {
+        return;
+      }
+
+      trackedMilestonesRef.current = new Set();
+      trackedPageEventsRef.current = "";
+      trackPageView(canonicalPath, measurementId);
+      window.setTimeout(() => {
+        trackPageSpecificEvents(pathname || "/", measurementId);
+      }, 120);
+    };
+
     document.addEventListener("click", onClick, true);
     document.addEventListener("submit", onSubmit, true);
     window.addEventListener("biomasa:site-search", onSiteSearch as EventListener);
@@ -506,6 +606,7 @@ export function AnalyticsProvider({
       "biomasa:page-transition-complete",
       onTransitionComplete as EventListener,
     );
+    window.addEventListener("biomasa:consent-updated", onConsentUpdated as EventListener);
 
     return () => {
       document.removeEventListener("click", onClick, true);
@@ -516,11 +617,18 @@ export function AnalyticsProvider({
         "biomasa:page-transition-complete",
         onTransitionComplete as EventListener,
       );
+      window.removeEventListener(
+        "biomasa:consent-updated",
+        onConsentUpdated as EventListener,
+      );
     };
   }, [canonicalPath, measurementId, pathname]);
 
   return (
     <>
+      <Script id="ga4-consent-default" strategy="beforeInteractive">
+        {getConsentBootstrapScript()}
+      </Script>
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
         strategy="afterInteractive"
