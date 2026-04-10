@@ -75,6 +75,7 @@ function buildMegaMenuHtml(parentLinkClass: string, childLinkClass: string, tabI
     (category) => `
       <li class="menu-item biomasa-mega-menu__item">
         <a href="/biomasa-w-polsce/${category.slug}/" class="${escapeHtml(childLinkClass)} biomasa-mega-menu__link"${tabIndexAttribute}>
+          <span class="biomasa-mega-menu__eyebrow">${escapeHtml(category.accentLabel)}</span>
           <span class="biomasa-mega-menu__label">${escapeHtml(category.name)}</span>
           <span class="biomasa-mega-menu__copy">${escapeHtml(category.shortDescription)}</span>
         </a>

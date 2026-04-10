@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BlogArchiveGrid } from "@/components/blog-archive-grid";
 import { EditorialCategoryHub } from "@/components/editorial-category-hub";
-import { MirrorTemplatePage } from "@/components/mirror-template-page";
-import { extractElementorPostsWidgetSignatures } from "@/lib/elementor-posts-widget";
+import { WordPressFramePage } from "@/components/wordpress-frame-page";
 import { buildEditorialArchiveMetadata } from "@/lib/editorial";
 import { getCombinedBlogIndex } from "@/lib/blog-index";
 import { EDITORIAL_CATEGORIES } from "@/lib/editorial-categories";
@@ -29,9 +27,6 @@ export default async function BiomasaInPolandPage() {
     notFound();
   }
 
-  const mainWidgetSignature =
-    extractElementorPostsWidgetSignatures(templateRoute.html)[0] ?? null;
-
   const categories = EDITORIAL_CATEGORIES.map((category) => ({
     category,
     totalPosts: items.filter((item) => item.categorySlug === category.slug).length,
@@ -39,31 +34,8 @@ export default async function BiomasaInPolandPage() {
   }));
 
   return (
-    <MirrorTemplatePage
-      path="/biomasa-w-polsce/"
-      route={templateRoute}
-      slots={[
-        {
-          selector: ".elementor-widget-search-form",
-          slotId: "editorial-category-hub",
-          node: <EditorialCategoryHub categories={categories} />,
-        },
-        {
-          selector: ".elementor-widget-posts",
-          slotId: "editorial-latest-posts",
-          node: (
-            <BlogArchiveGrid
-              items={items.slice(0, 12)}
-              title="Najnowsze wpisy z rynku biomasy"
-              intro="Pod ta sekcja splywaja najnowsze publikacje z calego klastra Biomasa w Polsce."
-              currentPage={1}
-              perPage={12}
-              basePath="/wpisy/"
-              widgetSignature={mainWidgetSignature}
-            />
-          ),
-        },
-      ]}
-    />
+    <WordPressFramePage path="/biomasa-w-polsce/" route={templateRoute}>
+      <EditorialCategoryHub categories={categories} latestItems={items} />
+    </WordPressFramePage>
   );
 }
