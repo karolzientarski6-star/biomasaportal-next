@@ -125,6 +125,40 @@ export function readSchemaTimestamp(route: ExportedRoute) {
   return route.exportedAt;
 }
 
+export function readSchemaArticleSections(route: ExportedRoute) {
+  const sections = new Set<string>();
+
+  for (const schema of route.schemaJsonLd) {
+    try {
+      const payload = JSON.parse(schema) as {
+        "@graph"?: Array<Record<string, unknown>>;
+        articleSection?: string | string[];
+      };
+      const graph = payload["@graph"] ?? [payload];
+
+      for (const entry of graph) {
+        const articleSection = entry.articleSection;
+
+        if (typeof articleSection === "string" && articleSection.trim()) {
+          sections.add(articleSection.trim());
+        }
+
+        if (Array.isArray(articleSection)) {
+          for (const section of articleSection) {
+            if (typeof section === "string" && section.trim()) {
+              sections.add(section.trim());
+            }
+          }
+        }
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return [...sections];
+}
+
 function extractExcerptFromHtml(route: ExportedRoute) {
   if (route.metaDescription) {
     return route.metaDescription;

@@ -4,12 +4,14 @@ import { getPublishedEditorialArticles } from "@/lib/editorial";
 import {
   getBlogSearchIndex,
   getRouteByPath,
+  readSchemaArticleSections,
   readSchemaTimestamp,
   type ExportedRoute,
 } from "@/lib/wordpress-export";
 import {
   getEditorialCategoryBySlug,
   inferEditorialCategory,
+  mapWordPressSectionToEditorialCategory,
 } from "@/lib/editorial-categories";
 
 export type BlogIndexItem = {
@@ -39,11 +41,18 @@ function excerptFromRoute(route: ExportedRoute) {
 
 async function mapWordPressPost(item: Awaited<ReturnType<typeof getBlogSearchIndex>>[number]) {
   const route = await getRouteByPath(item.path);
-  const category = inferEditorialCategory(
-    item.title,
-    item.title,
-    `${item.excerpt} ${route?.html ?? ""}`,
-  );
+  const schemaCategory = route
+    ? readSchemaArticleSections(route)
+        .map((section) => mapWordPressSectionToEditorialCategory(section))
+        .find(Boolean) ?? null
+    : null;
+  const category =
+    schemaCategory ??
+    inferEditorialCategory(
+      item.title,
+      item.title,
+      `${item.excerpt} ${route?.html ?? ""}`,
+    );
 
   return {
     id: `wordpress:${item.path}`,

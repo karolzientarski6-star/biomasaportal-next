@@ -61,6 +61,22 @@ function buildArticleSchema(article: EditorialArticle) {
   });
 }
 
+function selectRelatedItems(
+  article: EditorialArticle,
+  relatedIndex: Awaited<ReturnType<typeof getCombinedBlogIndex>>,
+  limit = 3,
+) {
+  const candidates = relatedIndex.filter((item) => item.path !== article.path);
+  const sameCategory = candidates.filter(
+    (item) => item.categorySlug === article.categorySlug,
+  );
+  const fallback = candidates.filter(
+    (item) => item.categorySlug !== article.categorySlug,
+  );
+
+  return [...sameCategory, ...fallback].slice(0, limit);
+}
+
 function EditorialArticleContent({
   article,
   relatedItems,
@@ -206,9 +222,7 @@ export async function EditorialArticlePage({ path }: { path: string }) {
     ]),
   );
   const [before, after] = splitHtmlBySlot(html, slotId);
-  const relatedItems = relatedIndex
-    .filter((item) => item.path !== article.path)
-    .slice(0, 3);
+  const relatedItems = selectRelatedItems(article, relatedIndex);
 
   return (
     <>

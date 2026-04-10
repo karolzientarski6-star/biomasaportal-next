@@ -146,6 +146,48 @@ export function getEditorialCategoryBySlug(slug: string) {
   return EDITORIAL_CATEGORIES.find((category) => category.slug === slug) ?? null;
 }
 
+function normalize(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+export function mapWordPressSectionToEditorialCategory(section: string) {
+  const normalizedSection = normalize(section);
+
+  if (!normalizedSection) {
+    return null;
+  }
+
+  const directMatches: Record<string, string> = {
+    pellet: "pellet",
+    biogaz: "biogazownie",
+    biogazownie: "biogazownie",
+    oze: "biomasa",
+    biomasa: "biomasa",
+    "maszyny lesne": "maszyny-lesne",
+    "maszyny leśne": "maszyny-lesne",
+    "zrebka i trociny": "zrebka-i-trociny",
+    "zrębka i trociny": "zrebka-i-trociny",
+    "piece i kotly": "piece-i-kotly",
+    "piece i kotły": "piece-i-kotly",
+    dofinansowania: "dofinansowania",
+  };
+
+  const matchedSlug = directMatches[normalizedSection];
+  if (matchedSlug) {
+    return getEditorialCategoryBySlug(matchedSlug);
+  }
+
+  return (
+    EDITORIAL_CATEGORIES.find((category) =>
+      category.keywords.some((token) => normalizedSection.includes(normalize(token))),
+    ) ?? null
+  );
+}
+
 export function inferEditorialCategory(
   keyword: string,
   title: string,
