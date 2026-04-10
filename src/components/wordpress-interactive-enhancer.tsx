@@ -1,0 +1,347 @@
+"use client";
+
+import { useEffect } from "react";
+
+type BlogSearchResult = {
+  path: string;
+  title: string;
+  excerpt: string;
+  image: string | null;
+};
+
+type WordPressInteractiveEnhancerProps = {
+  path: string;
+  featuredImage?: string | null;
+  isSinglePost?: boolean;
+};
+
+declare global {
+  interface Window {
+    toggleFAQ?: (element: HTMLElement) => void;
+    __codexBlogSearchAbort?: AbortController;
+  }
+}
+
+function slugifyHeading(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+function parseTocHeadingSelectors(widget: HTMLElement) {
+  const defaultSelectors = ["h2", "h3"];
+  const rawSettings = widget.dataset.settings;
+
+  if (!rawSettings) {
+    return defaultSelectors;
+  }
+
+  try {
+    const settings = JSON.parse(rawSettings) as {
+      headings_by_tags?: string[];
+    };
+    const selectors = settings.headings_by_tags
+      ?.map((tag) => tag.trim().toLowerCase())
+      .filter((tag) => /^h[1-6]$/.test(tag));
+
+    return selectors?.length ? selectors : defaultSelectors;
+  } catch {
+    return defaultSelectors;
+  }
+}
+
+function applyAosAttributes(root: ParentNode) {
+  const selectors = [
+    ".elementor-widget-heading",
+    ".elementor-widget-text-editor",
+    ".elementor-widget-image",
+    ".elementor-widget-button",
+    ".elementor-post",
+    ".faq-item",
+  ];
+
+  let delay = 0;
+
+  for (const element of root.querySelectorAll<HTMLElement>(selectors.join(", "))) {
+    if (element.dataset.aos) {
+      continue;
+    }
+
+    element.dataset.aos = element.classList.contains("elementor-post")
+      ? "fade-up"
+      : "fade-in";
+    element.dataset.aosDelay = String(delay);
+    delay = (delay + 40) % 160;
+  }
+}
+
+function applyFeaturedImage(root: ParentNode, featuredImage?: string | null) {
+  if (!featuredImage) {
+    return;
+  }
+
+  const postRoot = root.querySelector<HTMLElement>("[data-elementor-post-type='post']");
+  const hero = postRoot?.querySelector<HTMLElement>(":scope > .elementor-element:first-child");
+
+  if (hero) {
+    hero.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url("${featuredImage}")`;
+    hero.style.backgroundPosition = "center";
+    hero.style.backgroundRepeat = "no-repeat";
+    hero.style.backgroundSize = "cover";
+  }
+
+  for (const tocWidget of root.querySelectorAll<HTMLElement>(".elementor-widget-table-of-contents")) {
+    tocWidget.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.52), rgba(0, 0, 0, 0.52)), url("${featuredImage}")`;
+    tocWidget.style.backgroundPosition = "center";
+    tocWidget.style.backgroundRepeat = "no-repeat";
+    tocWidget.style.backgroundSize = "cover";
+  }
+}
+
+function buildTableOfContents(root: ParentNode) {
+  const tocWidgets = root.querySelectorAll<HTMLElement>(".elementor-widget-table-of-contents");
+
+  if (!tocWidgets.length) {
+    return;
+  }
+
+  for (const tocWidget of tocWidgets) {
+    const tocBody = tocWidget.querySelector<HTMLElement>(".elementor-toc__body");
+    const headingSelectors = parseTocHeadingSelectors(tocWidget);
+    const headings = Array.from(
+      root.querySelectorAll<HTMLHeadingElement>(headingSelectors.join(", ")),
+    )
+      .filter((heading) => !heading.closest(".elementor-widget-table-of-contents"))
+      .map((heading) => ({
+        element: heading,
+        text: heading.textContent?.replace(/\s+/g, " ").trim() ?? "",
+      }))
+      .filter((heading) => heading.text.length > 0);
+
+    if (!tocBody || !headings.length) {
+      continue;
+    }
+
+    headings.forEach(({ element, text }, index) => {
+      const fallbackId = `elementor-toc__heading-anchor-${index}`;
+      element.id = element.id || fallbackId;
+      if (!element.id.startsWith("elementor-toc__heading-anchor-")) {
+        element.id = `${fallbackId}-${slugifyHeading(text).slice(0, 48)}`;
+      }
+    });
+
+    const list = headings
+      .map(
+        ({ element, text }, index) =>
+          `<li class="elementor-toc__list-item"><div class="elementor-toc__list-item-text-wrapper"><a href="#${element.id}" class="elementor-toc__list-item-text${index === 0 ? " elementor-item-active" : ""}">${text}</a></div></li>`,
+      )
+      .join("");
+
+    tocBody.innerHTML = `<ol class="elementor-toc__list-wrapper">${list}</ol>`;
+  }
+}
+
+function toggleFaqItem(questionElement: HTMLElement) {
+  const item = questionElement.closest<HTMLElement>(".faq-item");
+
+  if (!item) {
+    return;
+  }
+
+  item.classList.toggle("active");
+}
+
+function setupFaq(root: ParentNode) {
+  window.toggleFAQ = toggleFaqItem;
+
+  for (const question of root.querySelectorAll<HTMLElement>(".faq-question")) {
+    question.setAttribute("role", "button");
+    question.tabIndex = 0;
+
+    if (!question.dataset.codexFaqBound) {
+      if (!question.getAttribute("onclick")) {
+        question.addEventListener("click", () => toggleFaqItem(question));
+      }
+      question.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          toggleFaqItem(question);
+        }
+      });
+      question.dataset.codexFaqBound = "true";
+    }
+  }
+}
+
+function renderSearchResults(
+  container: HTMLElement,
+  template: HTMLElement,
+  results: BlogSearchResult[],
+) {
+  if (results.length === 0) {
+    container.innerHTML =
+      '<div class="elementor-search-form__empty">Brak wpis\u00f3w pasuj\u0105cych do wyszukiwania.</div>';
+    return;
+  }
+
+  container.innerHTML = "";
+
+  for (const result of results) {
+    const article = template.cloneNode(true) as HTMLElement;
+    const links = article.querySelectorAll<HTMLAnchorElement>("a[href]");
+
+    links.forEach((link) => {
+      link.href = result.path;
+    });
+
+    const titleLink = article.querySelector<HTMLAnchorElement>(".elementor-post__title a");
+    if (titleLink) {
+      titleLink.textContent = result.title;
+      titleLink.href = result.path;
+    }
+
+    const excerpt = article.querySelector<HTMLElement>(".elementor-post__excerpt p");
+    if (excerpt) {
+      excerpt.textContent = result.excerpt;
+    }
+
+    const imageLink = article.querySelector<HTMLElement>(".elementor-post__thumbnail__link");
+    const image = article.querySelector<HTMLImageElement>(".elementor-post__thumbnail img");
+
+    if (result.image && image) {
+      image.src = result.image;
+      image.srcset = result.image;
+      image.alt = result.title;
+      if (imageLink instanceof HTMLAnchorElement) {
+        imageLink.href = result.path;
+      }
+    } else if (imageLink) {
+      imageLink.remove();
+    }
+
+    container.append(article);
+  }
+}
+
+function setupBlogSearch(root: ParentNode, path: string) {
+  if (path !== "/wpisy/") {
+    return;
+  }
+
+  const searchWidget = root.querySelector<HTMLElement>(".elementor-widget-search-form");
+  const searchForm = searchWidget?.querySelector<HTMLFormElement>("form.elementor-search-form");
+  const searchInput = searchWidget?.querySelector<HTMLInputElement>(".elementor-search-form__input");
+  const mainPostsWidget = root.querySelector<HTMLElement>(".elementor-widget-posts");
+  const postsContainer = mainPostsWidget?.querySelector<HTMLElement>(".elementor-posts-container");
+  const template = postsContainer?.querySelector<HTMLElement>(".elementor-post");
+
+  if (!searchWidget || !searchForm || !searchInput || !postsContainer || !template) {
+    return;
+  }
+
+  const originalHtml = postsContainer.innerHTML;
+  const resultsNotice =
+    searchWidget.querySelector<HTMLElement>(".elementor-search-form__results-count") ??
+    document.createElement("div");
+
+  resultsNotice.className = "elementor-search-form__results-count";
+
+  if (!resultsNotice.parentElement) {
+    searchWidget.append(resultsNotice);
+  }
+
+  const runSearch = async (query: string) => {
+    const normalized = query.trim();
+
+    if (window.__codexBlogSearchAbort) {
+      window.__codexBlogSearchAbort.abort();
+    }
+
+    if (!normalized) {
+      postsContainer.innerHTML = originalHtml;
+      resultsNotice.textContent = "";
+      window.dispatchEvent(new Event("codex:aos-refresh"));
+      return;
+    }
+
+    const controller = new AbortController();
+    window.__codexBlogSearchAbort = controller;
+
+    try {
+      const response = await fetch(
+        `/api/blog-search?q=${encodeURIComponent(normalized)}`,
+        { signal: controller.signal },
+      );
+
+      if (!response.ok) {
+        throw new Error("Search request failed");
+      }
+
+      const payload = (await response.json()) as { results: BlogSearchResult[] };
+      renderSearchResults(postsContainer, template, payload.results);
+      resultsNotice.textContent = `Znaleziono ${payload.results.length} wpis\u00f3w dla: "${normalized}"`;
+      window.dispatchEvent(new Event("codex:aos-refresh"));
+    } catch (error) {
+      if ((error as Error).name === "AbortError") {
+        return;
+      }
+
+      resultsNotice.textContent = "Nie uda\u0142o si\u0119 pobra\u0107 wynik\u00f3w wyszukiwania.";
+    }
+  };
+
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  if (!searchForm.dataset.codexSearchBound) {
+    searchForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      void runSearch(searchInput.value);
+    });
+
+    searchInput.addEventListener("input", () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
+      timeoutId = setTimeout(() => {
+        void runSearch(searchInput.value);
+      }, 220);
+    });
+
+    searchForm.dataset.codexSearchBound = "true";
+  }
+}
+
+export function WordPressInteractiveEnhancer({
+  path,
+  featuredImage,
+  isSinglePost = false,
+}: WordPressInteractiveEnhancerProps) {
+  useEffect(() => {
+    const root = document.querySelector(".wp-mirror-page");
+
+    if (!root) {
+      return;
+    }
+
+    root.querySelectorAll(".e-con.e-parent").forEach((element) => {
+      element.classList.add("e-lazyloaded");
+    });
+
+    if (isSinglePost) {
+      applyFeaturedImage(root, featuredImage);
+      buildTableOfContents(root);
+      setupFaq(root);
+    }
+
+    setupBlogSearch(root, path);
+    applyAosAttributes(root);
+    window.dispatchEvent(new Event("codex:aos-refresh"));
+  }, [featuredImage, isSinglePost, path]);
+
+  return null;
+}

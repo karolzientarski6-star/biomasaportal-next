@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { load } from "cheerio";
 
 export type ExportedRouteSeo = {
   canonicalUrl: string;
@@ -72,6 +73,15 @@ export type ExportedClassifiedCategory = {
   parent: number;
 };
 
+export type BlogSearchEntry = {
+  path: string;
+  title: string;
+  excerpt: string;
+  image: string | null;
+  canonicalUrl: string;
+  lastModified: string;
+};
+
 const DATA_DIR = path.join(process.cwd(), "data", "wordpress");
 const ROUTES_DIR = path.join(DATA_DIR, "routes");
 
@@ -86,6 +96,40 @@ async function readJson<T>(filePath: string): Promise<T | null> {
 
 async function getManifest() {
   return readJson<RouteManifest>(path.join(DATA_DIR, "manifest.json"));
+}
+
+export function readSchemaTimestamp(route: ExportedRoute) {
+  for (const schema of route.schemaJsonLd) {
+    try {
+      const payload = JSON.parse(schema) as {
+        "@graph"?: Array<Record<string, unknown>>;
+        dateModified?: string;
+      };
+      const graph = payload["@graph"] ?? [payload];
+
+      for (const entry of graph) {
+        const dateModified = entry.dateModified;
+
+        if (typeof dateModified === "string" && dateModified) {
+          return dateModified;
+        }
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return route.exportedAt;
+}
+
+function extractExcerptFromHtml(route: ExportedRoute) {
+  if (route.metaDescription) {
+    return route.metaDescription;
+  }
+
+  const $ = load(route.html);
+  const paragraph = $(".elementor-widget-text-editor p").first().text().replace(/\s+/g, " ").trim();
+  return paragraph.slice(0, 220);
 }
 
 export function normalizePath(routePath: string) {
@@ -112,6 +156,22 @@ export async function getRouteByPath(routePath: string) {
   }
 
   return readJson<ExportedRoute>(path.join(ROUTES_DIR, entry.file));
+}
+
+export async function getAllRoutes() {
+  const manifest = await getManifest();
+
+  if (!manifest) {
+    return [];
+  }
+
+  const routes = await Promise.all(
+    manifest.routes.map(async (entry) =>
+      readJson<ExportedRoute>(path.join(ROUTES_DIR, entry.file)),
+    ),
+  );
+
+  return routes.filter((route): route is ExportedRoute => Boolean(route));
 }
 
 function parseRobots(robots: string): Metadata["robots"] {
@@ -191,4 +251,24 @@ export async function getClassifiedsByAuthorHint(authorHint: string) {
   return classifieds.filter((item) =>
     item.author?.toLowerCase().includes(authorHint.toLowerCase()),
   );
+}
+
+export async function getBlogSearchIndex() {
+  const routes = await getAllRoutes();
+
+  return routes
+    .filter(
+      (route) =>
+        route.bodyClass.includes("single-post") &&
+        !route.path.startsWith("/ogloszenia/"),
+    )
+    .map<BlogSearchEntry>((route) => ({
+      path: route.path,
+      title: route.openGraph.title || route.title,
+      excerpt: extractExcerptFromHtml(route),
+      image: route.openGraph.image || null,
+      canonicalUrl: route.canonicalUrl || route.url,
+      lastModified: readSchemaTimestamp(route),
+    }))
+    .sort((left, right) => right.lastModified.localeCompare(left.lastModified));
 }
