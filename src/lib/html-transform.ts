@@ -1,10 +1,22 @@
 import { load } from "cheerio";
+import { EDITORIAL_CATEGORIES } from "@/lib/editorial-categories";
 
 const ABSOLUTE_SITE_URL = "https://biomasaportal.pl";
 const PERSISTENT_HIDDEN_BUTTON_LABELS = new Set([
+  "Dodaj ogloszenie",
   "Dodaj ogłoszenie",
+  "Zaloz konto",
   "Załóż konto",
 ]);
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
 
 function normalizeUrl(url: string) {
   if (url.startsWith("//")) {
@@ -57,11 +69,54 @@ function rewriteSrcSet(value: string) {
     .join(", ");
 }
 
+function buildMegaMenuHtml(parentLinkClass: string, childLinkClass: string, tabIndex?: string) {
+  const tabIndexAttribute = tabIndex ? ` tabindex="${escapeHtml(tabIndex)}"` : "";
+  const tiles = EDITORIAL_CATEGORIES.map(
+    (category) => `
+      <li class="menu-item biomasa-mega-menu__item">
+        <a href="/biomasa-w-polsce/${category.slug}/" class="${escapeHtml(childLinkClass)} biomasa-mega-menu__link"${tabIndexAttribute}>
+          <span class="biomasa-mega-menu__label">${escapeHtml(category.name)}</span>
+          <span class="biomasa-mega-menu__copy">${escapeHtml(category.shortDescription)}</span>
+        </a>
+      </li>`,
+  ).join("");
+
+  return `
+    <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children biomasa-mega-menu">
+      <a href="/biomasa-w-polsce/" class="${escapeHtml(parentLinkClass)}">Biomasa w Polsce</a>
+      <ul class="sub-menu elementor-nav-menu--dropdown biomasa-mega-menu__panel">
+        ${tiles}
+      </ul>
+    </li>`;
+}
+
+function replaceMachinesMenu($: ReturnType<typeof load>) {
+  $("li.menu-item")
+    .has("a[href*='/product-category/maszyny-lesne/']")
+    .each((_, element) => {
+      const item = $(element);
+      const link = item.children("a").first();
+
+      if (!link.length) {
+        return;
+      }
+
+      const parentLinkClass = link.attr("class") || "elementor-item";
+      const firstChildLink =
+        item.find("ul.sub-menu a").first().attr("class") || "elementor-sub-item";
+      const tabIndex = link.attr("tabindex") || undefined;
+
+      item.replaceWith(buildMegaMenuHtml(parentLinkClass, firstChildLink, tabIndex));
+    });
+}
+
 export function transformExportedHtml(html: string) {
   const $ = load(html);
 
   $("script").remove();
   $("link[rel='stylesheet']").remove();
+
+  replaceMachinesMenu($);
 
   $("[class]").each((_, element) => {
     const className = $(element).attr("class");
@@ -77,9 +132,7 @@ export function transformExportedHtml(html: string) {
       PERSISTENT_HIDDEN_BUTTON_LABELS.has(textContent);
 
     const nextClassName = classTokens
-      .filter(
-        (token) => shouldKeepInvisibleClass || token !== "elementor-invisible",
-      )
+      .filter((token) => shouldKeepInvisibleClass || token !== "elementor-invisible")
       .join(" ");
 
     if (nextClassName) {
@@ -201,6 +254,19 @@ export function transformExportedHtml(html: string) {
     }
 
     $(element).attr("poster", toAbsoluteSiteUrl(poster));
+  });
+
+  $("img").each((index, element) => {
+    const image = $(element);
+    image.attr("decoding", "async");
+
+    if (!image.attr("loading")) {
+      image.attr("loading", index === 0 ? "eager" : "lazy");
+    }
+
+    if (!image.attr("fetchpriority")) {
+      image.attr("fetchpriority", index === 0 ? "high" : "low");
+    }
   });
 
   return $("body").html() ?? $.root().html() ?? html;

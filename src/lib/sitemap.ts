@@ -1,9 +1,10 @@
 import {
   getAllRoutes,
-  getBlogSearchIndex,
   getClassifieds,
   readSchemaTimestamp,
 } from "@/lib/wordpress-export";
+import { getCombinedBlogIndex } from "@/lib/blog-index";
+import { EDITORIAL_CATEGORIES } from "@/lib/editorial-categories";
 
 const SITE_URL = "https://biomasaportal.pl";
 
@@ -54,7 +55,7 @@ export function buildSitemapIndex(entries: SitemapEntry[]) {
 }
 
 export async function getPostSitemapEntries() {
-  const posts = await getBlogSearchIndex();
+  const posts = await getCombinedBlogIndex();
   return posts.map((post) => ({
     loc: toAbsoluteUrl(post.canonicalUrl || post.path),
     lastmod: post.lastModified,
@@ -63,8 +64,10 @@ export async function getPostSitemapEntries() {
 
 export async function getPageSitemapEntries() {
   const routes = await getAllRoutes();
+  const blogItems = await getCombinedBlogIndex();
+  const now = new Date().toISOString();
 
-  return routes
+  const mirroredPages = routes
     .filter(
       (route) =>
         route.bodyClass.includes("page") &&
@@ -75,6 +78,20 @@ export async function getPageSitemapEntries() {
       loc: toAbsoluteUrl(route.canonicalUrl || route.path),
       lastmod: route.exportedAt,
     }));
+
+  const editorialHubPages = [
+    {
+      loc: `${SITE_URL}/biomasa-w-polsce/`,
+      lastmod: blogItems[0]?.lastModified ?? now,
+    },
+    ...EDITORIAL_CATEGORIES.map((category) => ({
+      loc: `${SITE_URL}/biomasa-w-polsce/${category.slug}/`,
+      lastmod:
+        blogItems.find((item) => item.categorySlug === category.slug)?.lastModified ?? now,
+    })),
+  ];
+
+  return [...mirroredPages, ...editorialHubPages];
 }
 
 export async function getProductSitemapEntries() {

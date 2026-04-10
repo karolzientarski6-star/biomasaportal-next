@@ -13,7 +13,12 @@ export function ClassifiedFormPanel({
   const [state, action, pending] = useActionState(createClassifiedAction, {});
 
   return (
-    <form action={action} className="form-grid">
+    <form
+      action={action}
+      className="form-grid"
+      data-analytics-form="classified_submission"
+      data-analytics-label="Panel dodawania ogloszenia"
+    >
       <div className="form-field">
         <label htmlFor="title">Tytuł ogłoszenia</label>
         <input

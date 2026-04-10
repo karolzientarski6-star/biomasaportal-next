@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import "aos/dist/aos.css";
+import { Suspense } from "react";
+import { AnalyticsProvider } from "@/components/analytics-provider";
 import { AnimationProvider } from "@/components/animation-provider";
+import { PageTransition } from "@/components/page-transition";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,8 +21,11 @@ export default function RootLayout({
   return (
     <html lang="pl">
       <body>
+        <Suspense fallback={null}>
+          <AnalyticsProvider />
+        </Suspense>
         <AnimationProvider />
-        {children}
+        <PageTransition>{children}</PageTransition>
       </body>
     </html>
   );

@@ -61,12 +61,42 @@ create table if not exists public.classified_view_events (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.editorial_articles (
+  id uuid primary key default gen_random_uuid(),
+  source_row integer not null unique,
+  sort_order integer not null,
+  keyword text not null,
+  title text not null,
+  slug text not null unique,
+  path text not null unique,
+  meta_title text not null,
+  meta_description text not null default '',
+  html_content text not null,
+  faq_schema text,
+  image_prompts text,
+  publication_status text not null default 'queued',
+  published_at timestamptz,
+  scheduled_for timestamptz,
+  category_slug text not null,
+  category_name text not null,
+  hero_image text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists editorial_articles_status_sort_idx
+  on public.editorial_articles (publication_status, sort_order);
+
+create index if not exists editorial_articles_category_sort_idx
+  on public.editorial_articles (category_slug, sort_order);
+
 alter table public.profiles enable row level security;
 alter table public.classified_categories enable row level security;
 alter table public.classifieds enable row level security;
 alter table public.classified_category_links enable row level security;
 alter table public.classified_images enable row level security;
 alter table public.classified_view_events enable row level security;
+alter table public.editorial_articles enable row level security;
 
 create or replace function public.handle_new_user()
 returns trigger
@@ -83,10 +113,27 @@ begin
 end;
 $$;
 
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+drop trigger if exists editorial_articles_set_updated_at on public.editorial_articles;
+create trigger editorial_articles_set_updated_at
+  before update on public.editorial_articles
+  for each row execute procedure public.set_updated_at();
 
 drop policy if exists "public classified categories are readable" on public.classified_categories;
 create policy "public classified categories are readable"
@@ -196,3 +243,10 @@ using (
       and classifieds.owner_id = auth.uid()
   )
 );
+
+drop policy if exists "public published editorial articles are readable" on public.editorial_articles;
+create policy "public published editorial articles are readable"
+on public.editorial_articles
+for select
+to anon, authenticated
+using (publication_status = 'published');

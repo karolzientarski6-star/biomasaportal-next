@@ -8,12 +8,13 @@ type SiteShellProps = {
 
 const navItems = [
   { href: "/", label: "Start" },
-  { href: "/ogloszenia/", label: "Ogłoszenia" },
+  { href: "/ogloszenia/", label: "Ogloszenia" },
   { href: "/wpisy/", label: "Wpisy" },
-  { href: "/dodaj-ogloszenie/", label: "Dodaj ogłoszenie" },
-  { href: "/moje-ogloszenia/", label: "Moje ogłoszenia" },
-  { href: "/zaloz-konto/", label: "Załóż konto" },
-  { href: "/zaloguj-sie/", label: "Zaloguj się" },
+  { href: "/biomasa-w-polsce/", label: "Biomasa w Polsce" },
+  { href: "/dodaj-ogloszenie/", label: "Dodaj ogloszenie" },
+  { href: "/moje-ogloszenia/", label: "Moje ogloszenia" },
+  { href: "/zaloz-konto/", label: "Zaloz konto" },
+  { href: "/zaloguj-sie/", label: "Zaloguj sie" },
 ];
 
 export async function SiteShell({ children }: SiteShellProps) {
@@ -42,7 +43,7 @@ export async function SiteShell({ children }: SiteShellProps) {
             </div>
           </Link>
 
-          <nav className="site-nav" aria-label="Główna nawigacja">
+          <nav className="site-nav" aria-label="Glowna nawigacja">
             {navItems
               .filter((item) => (userEmail ? item.href !== "/zaloguj-sie/" : true))
               .map((item) => (

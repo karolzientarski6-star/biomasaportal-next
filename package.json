@@ -9,6 +9,7 @@
     "lint": "eslint",
     "export:wordpress": "node scripts/export-wordpress.mjs",
     "import:supabase": "node scripts/import-supabase.mjs",
+    "import:keyword-gap": "python scripts/import-keyword-gap.py",
     "apply:supabase-schema": "node scripts/apply-supabase-schema.mjs",
     "compare:visual": "node scripts/visual-compare.mjs"
   },
@@ -17,6 +18,7 @@
     "@supabase/supabase-js": "^2.103.0",
     "aos": "^2.3.4",
     "cheerio": "^1.2.0",
+    "framer-motion": "^12.38.0",
     "next": "16.2.3",
     "pg": "^8.16.3",
     "react": "19.2.4",

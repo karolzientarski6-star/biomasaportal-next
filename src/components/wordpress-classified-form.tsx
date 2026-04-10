@@ -20,6 +20,8 @@ export function WordPressClassifiedForm({
       id="biomasa-ogloszenie-form"
       action={action}
       encType="multipart/form-data"
+      data-analytics-form="classified_submission"
+      data-analytics-label="Dodaj ogloszenie"
     >
       <div className="form-section">
         <h3 className="section-title">Podstawowe informacje</h3>

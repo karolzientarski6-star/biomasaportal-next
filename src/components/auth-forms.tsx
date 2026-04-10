@@ -11,7 +11,12 @@ export function SignUpForm({ origin }: SignUpFormProps) {
   const [state, action, pending] = useActionState(signUpAction, {});
 
   return (
-    <form action={action} className="form-grid">
+    <form
+      action={action}
+      className="form-grid"
+      data-analytics-form="sign_up"
+      data-analytics-label="Rejestracja"
+    >
       <input type="hidden" name="origin" value={origin} />
       <input type="hidden" name="terms" value="accepted" />
 
@@ -57,7 +62,12 @@ export function SignInForm() {
   const [state, action, pending] = useActionState(signInAction, {});
 
   return (
-    <form action={action} className="form-grid">
+    <form
+      action={action}
+      className="form-grid"
+      data-analytics-form="login"
+      data-analytics-label="Logowanie"
+    >
       <div className="form-field">
         <label htmlFor="login-email">Adres email</label>
         <input id="login-email" name="email" type="email" required />

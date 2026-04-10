@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { load } from "cheerio";
+import { cache } from "react";
 
 export type ExportedRouteSeo = {
   canonicalUrl: string;
@@ -85,18 +86,20 @@ export type BlogSearchEntry = {
 const DATA_DIR = path.join(process.cwd(), "data", "wordpress");
 const ROUTES_DIR = path.join(DATA_DIR, "routes");
 
-async function readJson<T>(filePath: string): Promise<T | null> {
+const readJson = cache(async function readJsonFile<T>(
+  filePath: string,
+): Promise<T | null> {
   try {
     const raw = await fs.readFile(filePath, "utf8");
     return JSON.parse(raw) as T;
   } catch {
     return null;
   }
-}
+});
 
-async function getManifest() {
+const getManifest = cache(async function getManifestFile() {
   return readJson<RouteManifest>(path.join(DATA_DIR, "manifest.json"));
-}
+});
 
 export function readSchemaTimestamp(route: ExportedRoute) {
   for (const schema of route.schemaJsonLd) {
@@ -140,7 +143,9 @@ export function normalizePath(routePath: string) {
   return routePath.endsWith("/") ? routePath : `${routePath}/`;
 }
 
-export async function getRouteByPath(routePath: string) {
+export const getRouteByPath = cache(async function getRouteByPathCached(
+  routePath: string,
+) {
   const manifest = await getManifest();
 
   if (!manifest) {
@@ -156,9 +161,9 @@ export async function getRouteByPath(routePath: string) {
   }
 
   return readJson<ExportedRoute>(path.join(ROUTES_DIR, entry.file));
-}
+});
 
-export async function getAllRoutes() {
+export const getAllRoutes = cache(async function getAllRoutesCached() {
   const manifest = await getManifest();
 
   if (!manifest) {
@@ -172,7 +177,7 @@ export async function getAllRoutes() {
   );
 
   return routes.filter((route): route is ExportedRoute => Boolean(route));
-}
+});
 
 function parseRobots(robots: string): Metadata["robots"] {
   if (!robots) {
@@ -234,17 +239,19 @@ export async function getRouteMetadata(routePath: string) {
   return route ? buildRouteMetadata(route) : {};
 }
 
-export async function getClassifieds() {
+export const getClassifieds = cache(async function getClassifiedsCached() {
   return (await readJson<ExportedClassified[]>(
     path.join(DATA_DIR, "classifieds.json"),
   )) ?? [];
-}
+});
 
-export async function getClassifiedCategories() {
-  return (await readJson<ExportedClassifiedCategory[]>(
-    path.join(DATA_DIR, "classified-categories.json"),
-  )) ?? [];
-}
+export const getClassifiedCategories = cache(
+  async function getClassifiedCategoriesCached() {
+    return (await readJson<ExportedClassifiedCategory[]>(
+      path.join(DATA_DIR, "classified-categories.json"),
+    )) ?? [];
+  },
+);
 
 export async function getClassifiedsByAuthorHint(authorHint: string) {
   const classifieds = await getClassifieds();
@@ -253,7 +260,7 @@ export async function getClassifiedsByAuthorHint(authorHint: string) {
   );
 }
 
-export async function getBlogSearchIndex() {
+export const getBlogSearchIndex = cache(async function getBlogSearchIndexCached() {
   const routes = await getAllRoutes();
 
   return routes
@@ -271,4 +278,4 @@ export async function getBlogSearchIndex() {
       lastModified: readSchemaTimestamp(route),
     }))
     .sort((left, right) => right.lastModified.localeCompare(left.lastModified));
-}
+});

@@ -9,6 +9,12 @@ type BlogSearchResult = {
   image: string | null;
 };
 
+type BlogSearchPayload = {
+  query: string;
+  totalResults: number;
+  results: BlogSearchResult[];
+};
+
 type WordPressInteractiveEnhancerProps = {
   path: string;
   featuredImage?: string | null;
@@ -33,7 +39,7 @@ function slugifyHeading(value: string) {
 }
 
 function parseTocHeadingSelectors(widget: HTMLElement) {
-  const defaultSelectors = ["h2", "h3"];
+  const defaultSelectors = ["h2"];
   const rawSettings = widget.dataset.settings;
 
   if (!rawSettings) {
@@ -62,6 +68,9 @@ function applyAosAttributes(root: ParentNode) {
     ".elementor-widget-button",
     ".elementor-post",
     ".faq-item",
+    ".biomasa-category-tile",
+    ".blog-category-seo-copy",
+    ".editorial-hub-intro",
   ];
 
   let delay = 0;
@@ -153,6 +162,14 @@ function toggleFaqItem(questionElement: HTMLElement) {
   }
 
   item.classList.toggle("active");
+  window.dispatchEvent(
+    new CustomEvent("biomasa:faq-toggle", {
+      detail: {
+        question: questionElement.textContent?.replace(/\s+/g, " ").trim(),
+        expanded: item.classList.contains("active"),
+      },
+    }),
+  );
 }
 
 function setupFaq(root: ParentNode) {
@@ -228,22 +245,36 @@ function renderSearchResults(
 }
 
 function setupBlogSearch(root: ParentNode, path: string) {
-  if (path !== "/wpisy/") {
+  if (!path.startsWith("/wpisy")) {
     return;
   }
 
   const searchWidget = root.querySelector<HTMLElement>(".elementor-widget-search-form");
   const searchForm = searchWidget?.querySelector<HTMLFormElement>("form.elementor-search-form");
   const searchInput = searchWidget?.querySelector<HTMLInputElement>(".elementor-search-form__input");
-  const mainPostsWidget = root.querySelector<HTMLElement>(".elementor-widget-posts");
+  const mainPostsWidget =
+    Array.from(root.querySelectorAll<HTMLElement>(".elementor-widget-posts"))
+      .sort(
+        (left, right) =>
+          right.querySelectorAll(".elementor-post").length -
+          left.querySelectorAll(".elementor-post").length,
+      )
+      .at(0) ?? null;
   const postsContainer = mainPostsWidget?.querySelector<HTMLElement>(".elementor-posts-container");
   const template = postsContainer?.querySelector<HTMLElement>(".elementor-post");
+  const submitControls = searchForm?.querySelectorAll<HTMLElement>(
+    "button, input[type='submit'], .elementor-search-form__icon",
+  );
 
   if (!searchWidget || !searchForm || !searchInput || !postsContainer || !template) {
     return;
   }
 
   const originalHtml = postsContainer.innerHTML;
+  searchForm.dataset.analyticsForm = "search";
+  searchForm.dataset.analyticsLabel = "Wyszukiwarka wpisow";
+  searchForm.setAttribute("action", path);
+  searchInput.setAttribute("autocomplete", "off");
   const resultsNotice =
     searchWidget.querySelector<HTMLElement>(".elementor-search-form__results-count") ??
     document.createElement("div");
@@ -281,9 +312,19 @@ function setupBlogSearch(root: ParentNode, path: string) {
         throw new Error("Search request failed");
       }
 
-      const payload = (await response.json()) as { results: BlogSearchResult[] };
+      const payload = (await response.json()) as BlogSearchPayload;
       renderSearchResults(postsContainer, template, payload.results);
-      resultsNotice.textContent = `Znaleziono ${payload.results.length} wpis\u00f3w dla: "${normalized}"`;
+      resultsNotice.textContent = `Znaleziono ${payload.totalResults} wpis\u00f3w dla: "${normalized}"`;
+      window.dispatchEvent(
+        new CustomEvent("biomasa:site-search", {
+          detail: {
+            path,
+            query: payload.query || normalized,
+            resultsCount: payload.results.length,
+            totalResults: payload.totalResults,
+          },
+        }),
+      );
       window.dispatchEvent(new Event("codex:aos-refresh"));
     } catch (error) {
       if ((error as Error).name === "AbortError") {
@@ -300,6 +341,13 @@ function setupBlogSearch(root: ParentNode, path: string) {
     searchForm.addEventListener("submit", (event) => {
       event.preventDefault();
       void runSearch(searchInput.value);
+    });
+
+    submitControls?.forEach((control) => {
+      control.addEventListener("click", (event) => {
+        event.preventDefault();
+        void runSearch(searchInput.value);
+      });
     });
 
     searchInput.addEventListener("input", () => {
