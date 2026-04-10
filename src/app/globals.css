@@ -275,6 +275,29 @@ img {
   border-radius: 14px;
 }
 
+.mirror-html .e-off-canvas[aria-hidden="true"] {
+  display: none !important;
+}
+
+@media (min-width: 1025px) {
+  .mirror-html .elementor-hidden-desktop {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .mirror-html .elementor-hidden-tablet {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .mirror-html .elementor-hidden-mobile,
+  .mirror-html .elementor-hidden-phone {
+    display: none !important;
+  }
+}
+
 .mirror-html .elementor-button,
 .mirror-html .wp-block-button__link,
 .primary-button,

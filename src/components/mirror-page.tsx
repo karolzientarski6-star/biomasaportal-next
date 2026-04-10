@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getRouteByPath, type ExportedRoute } from "@/lib/wordpress-export";
 import { MirrorHtml } from "./mirror-html";
+import { WordPressBodyClass } from "./wordpress-body-class";
 import { WordPressAssets } from "./wordpress-assets";
 import { WordPressSeoScripts } from "./wordpress-seo-scripts";
 
@@ -21,9 +22,10 @@ export async function MirrorPage({
 
   return (
     <>
+      <WordPressBodyClass className={route.bodyClass} />
       <WordPressAssets stylesheets={route.stylesheets} />
       <WordPressSeoScripts schemaJsonLd={route.schemaJsonLd} />
-      <div className={route.bodyClass ? `wp-mirror-page ${route.bodyClass}` : "wp-mirror-page"}>
+      <div className="wp-mirror-page">
         <MirrorHtml html={route.html} />
       </div>
     </>

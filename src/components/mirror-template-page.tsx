@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { injectHtmlSlots, transformExportedHtml } from "@/lib/html-transform";
 import { getRouteByPath, type ExportedRoute } from "@/lib/wordpress-export";
+import { WordPressBodyClass } from "./wordpress-body-class";
 import { WordPressAssets } from "./wordpress-assets";
 import { WordPressSeoScripts } from "./wordpress-seo-scripts";
 
@@ -68,11 +69,10 @@ export async function MirrorTemplatePage({
 
   return (
     <>
+      <WordPressBodyClass className={route.bodyClass} />
       <WordPressAssets stylesheets={route.stylesheets} />
       <WordPressSeoScripts schemaJsonLd={route.schemaJsonLd} />
-      <div
-        className={route.bodyClass ? `wp-mirror-page ${route.bodyClass}` : "wp-mirror-page"}
-      >
+      <div className="wp-mirror-page">
         {parts.map((part, index) =>
           part.type === "html" ? (
             <div

@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+/artifacts
+.next-server.pid
 
 # debug
 npm-debug.log*

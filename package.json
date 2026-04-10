@@ -9,7 +9,8 @@
     "lint": "eslint",
     "export:wordpress": "node scripts/export-wordpress.mjs",
     "import:supabase": "node scripts/import-supabase.mjs",
-    "apply:supabase-schema": "node scripts/apply-supabase-schema.mjs"
+    "apply:supabase-schema": "node scripts/apply-supabase-schema.mjs",
+    "compare:visual": "node scripts/visual-compare.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
@@ -28,6 +29,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
+    "pixelmatch": "^7.1.0",
+    "playwright": "^1.59.1",
+    "pngjs": "^7.0.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
