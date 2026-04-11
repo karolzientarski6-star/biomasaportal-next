@@ -928,14 +928,73 @@ img {
 .biomasa-category-tile {
   display: grid;
   min-width: 0;
-  gap: 16px;
-  padding: 24px;
+  gap: 0;
   align-content: start;
+  overflow: hidden;
+}
+
+.biomasa-category-tile > a {
+  display: block;
+  color: inherit !important;
+  text-decoration: none;
+}
+
+.biomasa-category-tile__image {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(23, 49, 38, 0.96), rgba(45, 92, 63, 0.92));
+}
+
+.biomasa-category-tile__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 240ms ease;
+}
+
+.biomasa-category-tile__image--fallback {
+  min-height: 184px;
+}
+
+.biomasa-category-tile__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 18px 20px;
+  background:
+    linear-gradient(180deg, rgba(23, 49, 38, 0.1), rgba(23, 49, 38, 0.8));
+}
+
+.biomasa-category-tile__overlay strong {
+  color: #fff !important;
+  font-size: 1.5rem;
+  line-height: 1.05;
+}
+
+.biomasa-category-tile__overlay-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff !important;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(10px);
 }
 
 .biomasa-category-tile__content {
   display: grid;
   gap: 12px;
+  padding: 22px 24px 18px;
 }
 
 .biomasa-category-tile h3 {
@@ -956,6 +1015,7 @@ img {
   justify-content: space-between;
   align-items: center;
   gap: 10px 16px;
+  padding: 0 24px 18px;
   font-weight: 700;
   color: var(--brand);
 }
@@ -963,18 +1023,30 @@ img {
 .biomasa-category-tile h3 a,
 .biomasa-category-tile__meta a,
 .biomasa-category-tile__links a {
-  color: var(--brand-dark);
+  color: var(--brand-dark) !important;
   text-decoration: none;
+}
+
+.biomasa-category-tile__meta a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.biomasa-category-tile__meta a::after {
+  content: "›";
+  font-size: 1.05rem;
+  line-height: 1;
 }
 
 .biomasa-category-tile h3 a:hover,
 .biomasa-category-tile__meta a:hover,
 .biomasa-category-tile__links a:hover {
-  color: var(--brand);
+  color: var(--brand) !important;
 }
 
 .biomasa-category-tile__links {
-  margin: 0;
+  margin: 0 24px 24px;
   padding: 16px 0 0;
   list-style: none;
   border-top: 1px solid rgba(214, 216, 202, 0.82);
@@ -985,9 +1057,14 @@ img {
 .biomasa-category-tile__links a {
   display: -webkit-box;
   overflow: hidden;
+  font-weight: 600;
   line-height: 1.5;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.biomasa-category-tile:hover .biomasa-category-tile__image img {
+  transform: scale(1.04);
 }
 
 .editorial-hub-post-grid {
@@ -1039,13 +1116,13 @@ img {
 
 .editorial-hub-post-card h3 a,
 .editorial-hub-post-card__meta a {
-  color: var(--brand-dark);
+  color: var(--brand-dark) !important;
   text-decoration: none;
 }
 
 .editorial-hub-post-card h3 a:hover,
 .editorial-hub-post-card__meta a:hover {
-  color: var(--brand);
+  color: var(--brand) !important;
 }
 
 .editorial-hub-post-card__body p:last-of-type {

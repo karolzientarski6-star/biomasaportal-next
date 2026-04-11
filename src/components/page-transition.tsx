@@ -13,6 +13,7 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("codex:aos-refresh"));
       window.dispatchEvent(new CustomEvent("biomasa:page-transition-complete"));
     }, 420);
 
