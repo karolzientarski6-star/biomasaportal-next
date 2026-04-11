@@ -1,13 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useConsent } from "@/components/consent-provider";
-import {
-  createConsentPreferences,
-  getConsentCategoryLabel,
-  type ConsentCategory,
-  type ConsentPreferences,
-} from "@/lib/consent";
+import { createConsentPreferences, type ConsentPreferences } from "@/lib/consent";
 
 type ConsentDraft = Pick<
   ConsentPreferences,
@@ -15,41 +11,41 @@ type ConsentDraft = Pick<
 >;
 
 const CONSENT_OPTIONS: Array<{
-  key: ConsentCategory;
+  key: keyof ConsentDraft | "necessary";
   title: string;
   description: string;
   readonly?: boolean;
 }> = [
   {
     key: "necessary",
-    title: "Niezbędne",
+    title: "Niezbedne",
     description:
-      "Zapewniają bezpieczeństwo, zapis sesji i podstawowe działanie strony. Te zgody są zawsze aktywne.",
+      "Wymagane do prawidlowego dzialania strony, logowania, bezpieczenstwa i podstawowych funkcji.",
     readonly: true,
   },
   {
     key: "analytics",
     title: "Analityczne",
     description:
-      "Pozwalają mierzyć ruch, zachowania użytkowników i skuteczność treści w Google Analytics 4.",
+      "Pomagaja nam mierzyc ruch i zrozumiec, jak uzytkownicy korzystaja z serwisu, np. w Google Analytics 4.",
   },
   {
     key: "functionality",
     title: "Funkcjonalne",
     description:
-      "Zapamiętują preferencje interfejsu i pomagają utrzymać wygodne działanie dodatkowych funkcji strony.",
+      "Zapamietuja preferencje interfejsu i pomagaja utrzymac wygodne dzialanie dodatkowych funkcji.",
   },
   {
     key: "personalization",
     title: "Personalizacja",
     description:
-      "Umożliwiają dopasowanie treści i doświadczenia do Twoich wcześniejszych wyborów.",
+      "Pozwalaja dopasowac tresci i doswiadczenie do Twoich wczesniejszych wyborow.",
   },
   {
     key: "marketing",
     title: "Marketingowe",
     description:
-      "Pozwalają na remarketing, sygnały reklamowe i bardziej precyzyjne mierzenie kampanii.",
+      "Umozliwiaja remarketing, sygnaly reklamowe i dokladniejsze mierzenie skutecznosci kampanii.",
   },
 ];
 
@@ -63,33 +59,28 @@ function toDraft(consent: ConsentPreferences): ConsentDraft {
 }
 
 export function CookieConsentBanner() {
-  const {
-    consent,
-    hasStoredConsent,
-    isReady,
-    isSettingsOpen,
-    openSettings,
-    closeSettings,
-    acceptAll,
-    rejectOptional,
-    savePreferences,
-  } = useConsent();
+  const { consent, hasStoredConsent, acceptAll, rejectOptional, savePreferences } =
+    useConsent();
   const [draft, setDraft] = useState<ConsentDraft>(() => toDraft(consent));
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     setDraft(toDraft(consent));
   }, [consent]);
 
-  const hasAnyOptionalConsent = useMemo(
-    () => Object.values(draft).some(Boolean),
-    [draft],
-  );
+  useEffect(() => {
+    const handleOpen = () => {
+      setDraft(toDraft(window.__biomasaConsent || consent));
+      setIsModalOpen(true);
+    };
 
-  if (!isReady) {
-    return null;
-  }
+    window.addEventListener("biomasa:open-cookie-settings", handleOpen);
+    return () => {
+      window.removeEventListener("biomasa:open-cookie-settings", handleOpen);
+    };
+  }, [consent]);
 
-  const showBanner = !hasStoredConsent || isSettingsOpen;
+  const showMiniBanner = !hasStoredConsent && !isModalOpen;
 
   const handleToggle = (key: keyof ConsentDraft) => {
     setDraft((current) => ({
@@ -98,7 +89,23 @@ export function CookieConsentBanner() {
     }));
   };
 
+  const handleOpenSettings = () => {
+    setDraft(toDraft(consent));
+    setIsModalOpen(true);
+  };
+
+  const handleAcceptAll = () => {
+    setIsModalOpen(false);
+    acceptAll();
+  };
+
+  const handleRejectOptional = () => {
+    setIsModalOpen(false);
+    rejectOptional();
+  };
+
   const handleSave = () => {
+    setIsModalOpen(false);
     savePreferences(
       createConsentPreferences({
         ...draft,
@@ -113,45 +120,107 @@ export function CookieConsentBanner() {
         <button
           type="button"
           className="cookie-settings-trigger"
-          onClick={openSettings}
-          aria-label="Otwórz ustawienia cookies"
+          onClick={handleOpenSettings}
+          aria-label="Otworz ustawienia cookies"
         >
           Ustawienia cookies
         </button>
       ) : null}
 
-      {showBanner ? (
-        <div className="cookie-consent-shell" role="dialog" aria-modal="false">
-          <section className="cookie-consent-banner" aria-label="Ustawienia zgód cookies">
-            <div className="cookie-consent-banner__intro">
-              <span className="cookie-consent-banner__eyebrow">Consent Mode v2</span>
-              <h2>Skonfiguruj zgody cookies</h2>
+      {showMiniBanner ? (
+        <div className="cookie-mini-shell" role="dialog" aria-modal="false">
+          <section className="cookie-mini-banner" aria-label="Baner cookies">
+            <div className="cookie-mini-banner__icon" aria-hidden="true">
+              Cookies
+            </div>
+            <div className="cookie-mini-banner__copy">
+              <h2>Ta strona uzywa plikow cookies</h2>
               <p>
-                Używamy plików cookies do działania serwisu, analityki i ewentualnych
-                działań marketingowych. Możesz zaakceptować wszystko albo osobno
-                włączyć wybrane kategorie zgód.
+                Uzywamy cookies do analizy ruchu i personalizacji tresci. Mozesz
+                zaakceptowac wszystkie albo dostosowac swoje preferencje.{" "}
+                <Link href="/polityka-prywatnosci/">Dowiedz sie wiecej</Link>
               </p>
             </div>
+            <div className="cookie-mini-banner__actions">
+              <button
+                type="button"
+                className="cookie-button cookie-button--muted"
+                onClick={handleRejectOptional}
+              >
+                Odrzuc wszystkie
+              </button>
+              <button
+                type="button"
+                className="cookie-button cookie-button--ghost"
+                onClick={handleOpenSettings}
+              >
+                Dostosuj
+              </button>
+              <button
+                type="button"
+                className="cookie-button cookie-button--primary"
+                onClick={handleAcceptAll}
+              >
+                Akceptuj wszystkie
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
-            <div className="cookie-consent-grid">
+      {isModalOpen ? (
+        <div className="cookie-modal-shell" role="dialog" aria-modal="true">
+          <div
+            className="cookie-modal-backdrop"
+            onClick={() => setIsModalOpen(false)}
+          />
+          <section className="cookie-modal" aria-label="Centrum prywatnosci">
+            <div className="cookie-modal__header">
+              <div>
+                <h2>Centrum prywatnosci</h2>
+                <p>
+                  Uzywamy plikow cookies, aby zapewnic prawidlowe dzialanie strony
+                  i analizowac ruch. Mozesz dostosowac swoje preferencje ponizej.{" "}
+                  <Link href="/polityka-prywatnosci/">Polityka prywatnosci</Link>
+                </p>
+              </div>
+              <button
+                type="button"
+                className="cookie-modal__close"
+                onClick={() => setIsModalOpen(false)}
+                aria-label="Zamknij centrum prywatnosci"
+              >
+                x
+              </button>
+            </div>
+
+            <div className="cookie-modal__content">
               {CONSENT_OPTIONS.map((option) => {
                 const isReadonly = option.readonly;
                 const isEnabled =
-                  option.key === "necessary" ? true : draft[option.key as keyof ConsentDraft];
+                  option.key === "necessary"
+                    ? true
+                    : draft[option.key as keyof ConsentDraft];
 
                 return (
-                  <article className="cookie-consent-card" key={option.key}>
-                    <div className="cookie-consent-card__header">
-                      <div>
-                        <h3>{option.title}</h3>
+                  <article className="cookie-preference-card" key={option.key}>
+                    <div className="cookie-preference-card__top">
+                      <div className="cookie-preference-card__copy">
+                        <div className="cookie-preference-card__title-row">
+                          <h3>{option.title}</h3>
+                          {isReadonly ? (
+                            <span className="cookie-preference-card__badge">
+                              Zawsze aktywne
+                            </span>
+                          ) : null}
+                        </div>
                         <p>{option.description}</p>
                       </div>
                       <button
                         type="button"
                         role="switch"
                         aria-checked={isEnabled}
-                        aria-label={`${isEnabled ? "Wyłącz" : "Włącz"} zgody ${getConsentCategoryLabel(option.key).toLowerCase()}`}
-                        className={`cookie-toggle${isEnabled ? " is-active" : ""}`}
+                        className={`cookie-switch${isEnabled ? " is-active" : ""}`}
                         onClick={
                           isReadonly
                             ? undefined
@@ -159,15 +228,8 @@ export function CookieConsentBanner() {
                         }
                         disabled={isReadonly}
                       >
-                        <span className="cookie-toggle__track">
-                          <span className="cookie-toggle__thumb" />
-                        </span>
-                        <span className="cookie-toggle__label">
-                          {isReadonly
-                            ? "Zawsze aktywne"
-                            : isEnabled
-                              ? "Włączone"
-                              : "Wyłączone"}
+                        <span className="cookie-switch__track">
+                          <span className="cookie-switch__thumb" />
                         </span>
                       </button>
                     </div>
@@ -176,46 +238,28 @@ export function CookieConsentBanner() {
               })}
             </div>
 
-            <div className="cookie-consent-banner__footer">
-              <p>
-                Aktualny stan:
-                {" "}
-                {hasAnyOptionalConsent
-                  ? "co najmniej jedna zgoda opcjonalna jest włączona."
-                  : "wszystkie zgody opcjonalne są wyłączone."}
-              </p>
-              <div className="cookie-consent-banner__actions">
-                {hasStoredConsent ? (
-                  <button
-                    type="button"
-                    className="cookie-button cookie-button--ghost"
-                    onClick={closeSettings}
-                  >
-                    Zamknij
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  className="cookie-button cookie-button--ghost"
-                  onClick={rejectOptional}
-                >
-                  Odrzuć opcjonalne
-                </button>
-                <button
-                  type="button"
-                  className="cookie-button cookie-button--secondary"
-                  onClick={handleSave}
-                >
-                  Zapisz ustawienia
-                </button>
-                <button
-                  type="button"
-                  className="cookie-button cookie-button--primary"
-                  onClick={acceptAll}
-                >
-                  Zaakceptuj wszystkie
-                </button>
-              </div>
+            <div className="cookie-modal__footer">
+              <button
+                type="button"
+                className="cookie-button cookie-button--muted"
+                onClick={handleRejectOptional}
+              >
+                Odrzuc wszystkie
+              </button>
+              <button
+                type="button"
+                className="cookie-button cookie-button--ghost"
+                onClick={handleSave}
+              >
+                Zapisz moje wybory
+              </button>
+              <button
+                type="button"
+                className="cookie-button cookie-button--primary"
+                onClick={handleAcceptAll}
+              >
+                Akceptuj wszystkie
+              </button>
             </div>
           </section>
         </div>

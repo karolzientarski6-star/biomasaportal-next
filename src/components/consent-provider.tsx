@@ -26,9 +26,6 @@ type ConsentContextValue = {
   consent: ConsentPreferences;
   hasStoredConsent: boolean;
   isReady: boolean;
-  isSettingsOpen: boolean;
-  openSettings: () => void;
-  closeSettings: () => void;
   acceptAll: () => void;
   rejectOptional: () => void;
   savePreferences: (preferences: ConsentPreferences) => void;
@@ -90,7 +87,6 @@ export function ConsentProvider({ children }: ConsentProviderProps) {
   );
   const [hasStoredConsent, setHasStoredConsent] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     const persistedConsent = readStoredConsent();
@@ -103,7 +99,6 @@ export function ConsentProvider({ children }: ConsentProviderProps) {
 
     setConsent(initialConsent);
     setHasStoredConsent(hasPersistedConsent);
-    setIsSettingsOpen(!hasPersistedConsent);
     window.__biomasaConsentPersisted = hasPersistedConsent;
     window.__biomasaConsent = initialConsent;
     setIsReady(true);
@@ -114,7 +109,6 @@ export function ConsentProvider({ children }: ConsentProviderProps) {
       persistConsent(preferences);
       setConsent(preferences);
       setHasStoredConsent(true);
-      setIsSettingsOpen(false);
       syncGoogleConsent(preferences);
       window.dispatchEvent(
         new CustomEvent("biomasa:consent-updated", {
@@ -124,16 +118,6 @@ export function ConsentProvider({ children }: ConsentProviderProps) {
     },
     [],
   );
-
-  const openSettings = useCallback(() => {
-    setIsSettingsOpen(true);
-  }, []);
-
-  const closeSettings = useCallback(() => {
-    if (hasStoredConsent) {
-      setIsSettingsOpen(false);
-    }
-  }, [hasStoredConsent]);
 
   const acceptAll = useCallback(() => {
     applyConsent(acceptAllConsent());
@@ -158,37 +142,19 @@ export function ConsentProvider({ children }: ConsentProviderProps) {
     [applyConsent],
   );
 
-  useEffect(() => {
-    const handleOpen = () => {
-      setIsSettingsOpen(true);
-    };
-
-    window.addEventListener("biomasa:open-cookie-settings", handleOpen);
-    return () => {
-      window.removeEventListener("biomasa:open-cookie-settings", handleOpen);
-    };
-  }, []);
-
   const value = useMemo<ConsentContextValue>(
     () => ({
       consent,
       hasStoredConsent,
       isReady,
-      isSettingsOpen,
-      openSettings,
-      closeSettings,
       acceptAll,
       rejectOptional,
       savePreferences,
     }),
     [
       acceptAll,
-      closeSettings,
       consent,
-      hasStoredConsent,
       isReady,
-      isSettingsOpen,
-      openSettings,
       rejectOptional,
       savePreferences,
     ],

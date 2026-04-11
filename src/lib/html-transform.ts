@@ -116,6 +116,7 @@ export function transformExportedHtml(html: string) {
 
   $("script").remove();
   $("link[rel='stylesheet']").remove();
+  $("#cookie-notice, .cookie-notice-hidden, .cn-revoke-cookie, .cn-revoke-inline").remove();
 
   replaceMachinesMenu($);
 
