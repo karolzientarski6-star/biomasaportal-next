@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BlogArchiveGrid } from "@/components/blog-archive-grid";
-import { MirrorTemplatePage } from "@/components/mirror-template-page";
-import { extractElementorPostsWidgetSignatures } from "@/lib/elementor-posts-widget";
+import { EditorialCategoryArchivePage } from "@/components/editorial-category-archive-page";
 import { buildEditorialArchiveMetadata } from "@/lib/editorial";
 import { getBlogIndexByCategory } from "@/lib/blog-index";
 import { getEditorialCategoryBySlug } from "@/lib/editorial-categories";
@@ -14,22 +12,6 @@ const POSTS_PER_PAGE = 12;
 type EditorialCategoryPageProps = {
   params: Promise<{ category: string }>;
 };
-
-function CategoryIntro({ name, description }: { name: string; description: string }) {
-  return (
-    <div className="mirror-html editorial-category-intro">
-      <section className="elementor-element elementor-widget">
-        <div className="elementor-widget-container">
-          <div className="blog-archive-summary">
-            <p className="page-card__eyebrow">Biomasa w Polsce</p>
-            <h1>{name}</h1>
-            <p>{description}</p>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
 
 export async function generateMetadata({
   params,
@@ -67,41 +49,14 @@ export default async function EditorialCategoryPage({
     notFound();
   }
 
-  const mainWidgetSignature =
-    extractElementorPostsWidgetSignatures(templateRoute.html)[0] ?? null;
-
   return (
-    <MirrorTemplatePage
+    <EditorialCategoryArchivePage
       path={`/biomasa-w-polsce/${category.slug}/`}
       route={templateRoute}
-      slots={[
-        {
-          selector: ".elementor-widget-search-form",
-          slotId: "editorial-category-intro",
-          node: (
-            <CategoryIntro
-              name={category.name}
-              description={category.shortDescription}
-            />
-          ),
-        },
-        {
-          selector: ".elementor-widget-posts",
-          slotId: "editorial-category-grid",
-          node: (
-            <BlogArchiveGrid
-              items={items}
-              title={category.name}
-              intro={category.seoDescription}
-              currentPage={1}
-              perPage={POSTS_PER_PAGE}
-              basePath={`/biomasa-w-polsce/${category.slug}/`}
-              category={category}
-              widgetSignature={mainWidgetSignature}
-            />
-          ),
-        },
-      ]}
+      category={category}
+      items={items}
+      currentPage={1}
+      perPage={POSTS_PER_PAGE}
     />
   );
 }

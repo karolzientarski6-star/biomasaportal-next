@@ -885,6 +885,40 @@ img {
   gap: 8px;
 }
 
+.editorial-category-page {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0 72px;
+  display: grid;
+  gap: 28px;
+}
+
+.editorial-category-page__intro {
+  display: grid;
+  gap: 12px;
+  padding: 30px 34px;
+  border: 1px solid rgba(214, 216, 202, 0.92);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at top right, rgba(242, 165, 26, 0.12), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 247, 242, 0.98));
+  box-shadow: var(--shadow);
+}
+
+.editorial-category-page__intro h1 {
+  margin: 0;
+  color: var(--brand-dark);
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.05;
+}
+
+.editorial-category-page__intro p:last-child {
+  margin: 0;
+  max-width: 70ch;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
 .biomasa-category-grid {
   display: grid;
   gap: 18px;
@@ -1476,6 +1510,7 @@ img {
   .classified-card,
   .editorial-post-layout > .e-con-inner,
   .editorial-hub-hero,
+  .editorial-category-page,
   .biomasa-category-grid,
   .editorial-hub-post-grid,
   .cookie-consent-grid {
@@ -1499,8 +1534,15 @@ img {
     gap: 24px;
   }
 
+  .editorial-category-page {
+    width: min(100%, calc(100% - 20px));
+    padding: 24px 0 56px;
+    gap: 22px;
+  }
+
   .editorial-hub-hero__copy,
   .editorial-hub-hero__stats,
+  .editorial-category-page__intro,
   .biomasa-category-tile,
   .editorial-hub-post-card__body {
     padding: 20px;
