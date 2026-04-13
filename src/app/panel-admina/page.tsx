@@ -18,8 +18,13 @@ function summarizeStatus(
   return items.filter((item) => item.publicationStatus === status).length;
 }
 
-export default async function AdminPanelPage() {
+export default async function AdminPanelPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ msg?: string; err?: string }>;
+}) {
   const { email } = await requireAdmin();
+  const params = await searchParams;
   const [seedArticles, dbArticles, schedulePreview] = await Promise.all([
     getEditorialSeedArticles(),
     getEditorialArticles(),
@@ -29,6 +34,7 @@ export default async function AdminPanelPage() {
   const queued = summarizeStatus(dbArticles, "queued");
   const published = summarizeStatus(dbArticles, "published");
   const alreadyPublished = summarizeStatus(dbArticles, "already_published");
+  const inDb = dbArticles.some((a) => a.id && !a.id.startsWith("seed-"));
 
   return (
     <SiteShell>
@@ -36,76 +42,155 @@ export default async function AdminPanelPage() {
         <section className="page-card">
           <div className="page-card__header">
             <p className="page-card__eyebrow">Panel administratora</p>
-            <h1>Kolejka publikacji BiomasaPortal</h1>
+            <h1>Kolejka publikacji</h1>
             <p>
-              Panel zarzadza seedem z Excela, kolejka do publikacji i automatyczna
-              publikacja 5 wpisow tygodniowo. Aktualnie zalogowany: <strong>{email}</strong>.
+              Zalogowany: <strong>{email}</strong>
             </p>
           </div>
           <div className="page-card__body">
-            <div className="feature-grid">
+            {/* Feedback */}
+            {params.msg && (
+              <div className="admin-feedback admin-feedback--ok" style={{ marginBottom: 20 }}>
+                ✓ {params.msg}
+              </div>
+            )}
+            {params.err && (
+              <div className="admin-feedback admin-feedback--err" style={{ marginBottom: 20 }}>
+                ✗ {params.err}
+              </div>
+            )}
+
+            {/* Stats */}
+            <div className="feature-grid" style={{ marginBottom: 24 }}>
               <article className="feature-card">
                 <h3>Seed z Excela</h3>
-                <p>{seedArticles.length} rekordow zaimportowanych do lokalnego seedu.</p>
-              </article>
-              <article className="feature-card">
-                <h3>Juz opublikowane</h3>
-                <p>{alreadyPublished} wpisow oznaczonych jako juz opublikowane.</p>
+                <p style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--brand-dark)", margin: "4px 0 0" }}>
+                  {seedArticles.length}
+                </p>
+                <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--muted)" }}>artykułów w lokalnym pliku</p>
               </article>
               <article className="feature-card">
                 <h3>W kolejce</h3>
-                <p>{queued} wpisow czeka na automatyczna lub reczna publikacje.</p>
+                <p style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--brand)", margin: "4px 0 0" }}>
+                  {queued}
+                </p>
+                <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--muted)" }}>czeka na publikację</p>
               </article>
               <article className="feature-card">
-                <h3>Nowy silnik redakcyjny</h3>
-                <p>{published} wpisow opublikowanych bezposrednio z Next.js.</p>
+                <h3>Opublikowane</h3>
+                <p style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--brand-dark)", margin: "4px 0 0" }}>
+                  {published + alreadyPublished}
+                </p>
+                <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--muted)" }}>wpisów live</p>
               </article>
             </div>
 
-            <div className="button-row" style={{ marginTop: 24 }}>
-              <form
-                action={async () => {
-                  "use server";
-                  await syncEditorialSeedAction();
-                }}
-              >
-                <button type="submit" className="primary-button">
-                  Synchronizuj seed do Supabase
-                </button>
-              </form>
-              <form
-                action={async () => {
-                  "use server";
-                  await publishNextEditorialBatchAction(5);
-                }}
-              >
-                <button type="submit" className="secondary-button">
-                  Opublikuj recznie kolejne 5 wpisow
-                </button>
-              </form>
+            {/* Steps */}
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{ marginBottom: 16 }}>Jak to działa — kolejność kroków</h3>
+
+              {/* Krok 1 */}
+              <div className="admin-step">
+                <div className="admin-step__num">1</div>
+                <div className="admin-step__body">
+                  <h4>Zastosuj schemat Supabase (jednorazowo)</h4>
+                  <p>
+                    Uruchom <code>supabase/schema.sql</code> w{" "}
+                    <a
+                      href="https://supabase.com/dashboard/project/dbytcmbvsugunwndamne/sql/new"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "var(--brand)" }}
+                    >
+                      Supabase SQL Editor ↗
+                    </a>
+                    . Robi się to raz.
+                  </p>
+                </div>
+              </div>
+
+              {/* Krok 2 */}
+              <div className="admin-step">
+                <div className="admin-step__num">2</div>
+                <div className="admin-step__body">
+                  <h4>Synchronizuj seed do Supabase</h4>
+                  <p>
+                    Ładuje {seedArticles.length} artykułów z lokalnego pliku JSON do bazy.{" "}
+                    {inDb ? (
+                      <span style={{ color: "var(--brand)", fontWeight: 600 }}>✓ Baza ma już rekordy.</span>
+                    ) : (
+                      <span style={{ color: "var(--muted)" }}>Baza jest pusta — kliknij poniżej.</span>
+                    )}
+                  </p>
+                  <form
+                    action={async () => {
+                      "use server";
+                      const result = await syncEditorialSeedAction();
+                      const params = new URLSearchParams();
+                      if (result.success) params.set("msg", result.success);
+                      if (result.error) params.set("err", result.error);
+                      const { redirect } = await import("next/navigation");
+                      redirect(`/panel-admina/?${params.toString()}`);
+                    }}
+                  >
+                    <button type="submit" className="primary-button">
+                      Synchronizuj seed do Supabase
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {/* Krok 3 */}
+              <div className="admin-step">
+                <div className="admin-step__num">3</div>
+                <div className="admin-step__body">
+                  <h4>Opublikuj ręcznie kolejne 5 wpisów</h4>
+                  <p>
+                    Publikuje 5 artykułów z kolejki naraz. Cron robi to automatycznie
+                    w każdy poniedziałek o 7:00 UTC.{" "}
+                    {queued === 0 && (
+                      <span style={{ color: "var(--muted)" }}>
+                        (Brak wpisów w kolejce — najpierw wykonaj krok 2)
+                      </span>
+                    )}
+                  </p>
+                  <form
+                    action={async () => {
+                      "use server";
+                      const result = await publishNextEditorialBatchAction(5);
+                      const params = new URLSearchParams();
+                      if (result.success) params.set("msg", result.success);
+                      if (result.error) params.set("err", result.error);
+                      const { redirect } = await import("next/navigation");
+                      redirect(`/panel-admina/?${params.toString()}`);
+                    }}
+                  >
+                    <button
+                      type="submit"
+                      className="secondary-button"
+                      disabled={queued === 0}
+                    >
+                      Opublikuj ręcznie kolejne 5 wpisów
+                    </button>
+                  </form>
+                </div>
+              </div>
             </div>
 
-            <div className="support-card" style={{ marginTop: 24 }}>
-              <h3>Automatyzacja tygodniowa</h3>
-              <p>
-                Vercel cron wywola endpoint raz w tygodniu, a publikacja pojdzie po
-                <strong> sort_order</strong> w paczkach po 5 wpisow. Do produkcji potrzebne
-                sa zmienne <code>CRON_SECRET</code>, <code>ADMIN_EMAILS</code> i odswiezony
-                schemat Supabase z tabela <code>editorial_articles</code>.
-              </p>
-            </div>
-
-            <div className="support-card" style={{ marginTop: 24 }}>
-              <h3>Kolejka publikacji i terminy</h3>
-              {schedulePreview.length > 0 ? (
+            {/* Queue preview */}
+            {schedulePreview.length > 0 && (
+              <div className="support-card" style={{ marginTop: 24 }}>
+                <h3 style={{ marginTop: 0 }}>Następne w kolejce</h3>
                 <ol className="editorial-queue-list">
                   {schedulePreview.map((article) => (
                     <li key={article.id}>
                       <div>
                         <strong>{article.title}</strong>
-                        <span>{article.categoryName}</span>
+                        <span style={{ marginLeft: 8, fontSize: "0.8rem", color: "var(--muted)" }}>
+                          {article.categoryName}
+                        </span>
                       </div>
-                      <time dateTime={article.scheduledFor ?? undefined}>
+                      <time dateTime={article.scheduledFor ?? undefined} style={{ fontSize: "0.8rem", color: "var(--muted)", whiteSpace: "nowrap" }}>
                         {article.scheduledFor
                           ? new Intl.DateTimeFormat("pl-PL", {
                               day: "numeric",
@@ -117,19 +202,20 @@ export default async function AdminPanelPage() {
                     </li>
                   ))}
                 </ol>
-              ) : (
-                <p>Brak oczekujacych wpisow w kolejce.</p>
-              )}
-            </div>
+              </div>
+            )}
 
+            {/* Categories */}
             <div className="support-card" style={{ marginTop: 24 }}>
-              <h3>Kategorie tresci pod mega menu i SEO</h3>
+              <h3 style={{ marginTop: 0 }}>Kategorie treści</h3>
               <div className="feature-grid">
                 {EDITORIAL_CATEGORIES.map((category) => (
                   <article key={category.slug} className="feature-card">
                     <p className="page-card__eyebrow">{category.accentLabel}</p>
                     <h3>{category.name}</h3>
-                    <p>{category.shortDescription}</p>
+                    <p style={{ fontSize: "0.85rem", color: "var(--muted)", margin: 0 }}>
+                      {category.shortDescription}
+                    </p>
                   </article>
                 ))}
               </div>
