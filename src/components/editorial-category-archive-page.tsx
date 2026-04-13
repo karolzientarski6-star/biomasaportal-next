@@ -1,6 +1,7 @@
 import { BlogArchiveGrid } from "@/components/blog-archive-grid";
 import { WordPressFramePage } from "@/components/wordpress-frame-page";
 import type { BlogIndexItem } from "@/lib/blog-index";
+import type { ElementorWidgetSignature } from "@/lib/elementor-posts-widget";
 import type { EditorialCategory } from "@/lib/editorial-categories";
 import type { ExportedRoute } from "@/lib/wordpress-export";
 
@@ -11,6 +12,7 @@ type EditorialCategoryArchivePageProps = {
   items: BlogIndexItem[];
   currentPage: number;
   perPage: number;
+  widgetSignature?: ElementorWidgetSignature | null;
 };
 
 export function EditorialCategoryArchivePage({
@@ -20,6 +22,7 @@ export function EditorialCategoryArchivePage({
   items,
   currentPage,
   perPage,
+  widgetSignature = null,
 }: EditorialCategoryArchivePageProps) {
   return (
     <WordPressFramePage path={path} route={route}>
@@ -38,6 +41,7 @@ export function EditorialCategoryArchivePage({
           perPage={perPage}
           basePath={`/biomasa-w-polsce/${category.slug}/`}
           category={category}
+          widgetSignature={widgetSignature}
           showSummary={false}
         />
       </div>

@@ -7,14 +7,13 @@ type SiteShellProps = {
 };
 
 const navItems = [
-  { href: "/", label: "Start" },
-  { href: "/ogloszenia/", label: "Ogloszenia" },
-  { href: "/wpisy/", label: "Wpisy" },
+  { href: "/ogloszenia/", label: "Ogłoszenia" },
   { href: "/biomasa-w-polsce/", label: "Biomasa w Polsce" },
-  { href: "/dodaj-ogloszenie/", label: "Dodaj ogloszenie" },
-  { href: "/moje-ogloszenia/", label: "Moje ogloszenia" },
-  { href: "/zaloz-konto/", label: "Zaloz konto" },
-  { href: "/zaloguj-sie/", label: "Zaloguj sie" },
+  { href: "/wpisy/", label: "Wpisy" },
+  { href: "/dodaj-ogloszenie/", label: "Dodaj ogłoszenie" },
+  { href: "/moje-ogloszenia/", label: "Moje ogłoszenia" },
+  { href: "/zaloz-konto/", label: "Załóż konto", hideWhenLoggedIn: false },
+  { href: "/zaloguj-sie/", label: "Zaloguj się", hideWhenLoggedIn: true },
 ];
 
 export async function SiteShell({ children }: SiteShellProps) {
@@ -36,16 +35,24 @@ export async function SiteShell({ children }: SiteShellProps) {
       <header className="site-header">
         <div className="site-header__inner">
           <Link href="/" className="site-brand">
-            <div className="site-brand__mark">BP</div>
+            {/* Logo — serwowane przez rewrite /wp-content/ → wp.biomasaportal.pl */}
+            <img
+              src="/wp-content/uploads/2024/01/cropped-biomasaportal.png"
+              alt="BiomasaPortal"
+              width={40}
+              height={40}
+              className="site-brand__logo"
+            />
             <div className="site-brand__text">
               <strong>BiomasaPortal</strong>
-              <span>Migracja Next.js</span>
             </div>
           </Link>
 
-          <nav className="site-nav" aria-label="Glowna nawigacja">
+          <nav className="site-nav" aria-label="Główna nawigacja">
             {navItems
-              .filter((item) => (userEmail ? item.href !== "/zaloguj-sie/" : true))
+              .filter((item) =>
+                item.hideWhenLoggedIn ? !userEmail : true,
+              )
               .map((item) => (
                 <Link key={item.href} href={item.href}>
                   {item.label}
@@ -53,7 +60,7 @@ export async function SiteShell({ children }: SiteShellProps) {
               ))}
             {userEmail ? (
               <>
-                <span>{userEmail}</span>
+                <span className="site-nav__user">{userEmail}</span>
                 <form action={signOutAction}>
                   <button type="submit" className="secondary-button">
                     Wyloguj
@@ -69,8 +76,17 @@ export async function SiteShell({ children }: SiteShellProps) {
 
       <footer className="site-footer">
         <div className="site-footer__inner">
-          <span>BiomasaPortal.pl</span>
-          <span>{"WordPress -> Next.js + Supabase"}</span>
+          <span>© {new Date().getFullYear()} Biomasa Portal</span>
+          <nav className="site-footer__nav" aria-label="Nawigacja stopki">
+            <Link href="/ogloszenia/">Ogłoszenia</Link>
+            <Link href="/polityka-prywatnosci/">Polityka prywatności</Link>
+            <Link href="/regulamin/">Regulamin</Link>
+          </nav>
+          <address className="site-footer__contact">
+            <a href="tel:+48511430886">+48 511 430 886</a>
+            {" · "}
+            <a href="mailto:kontakt@maxdigital.pl">kontakt@maxdigital.pl</a>
+          </address>
         </div>
       </footer>
     </div>

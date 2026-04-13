@@ -228,17 +228,46 @@ function parseRobots(robots: string): Metadata["robots"] {
   };
 }
 
+/**
+ * Naprawia tytuł strony dla produktów WooCommerce.
+ * Yoast eksportował "Nazwa produktu - | Biomasa Portal" (pusta kategoria w separatorze).
+ * Dla /shop/ tytuł to całkowicie pusty "- | Biomasa Portal".
+ */
+function sanitizeRouteTitle(route: ExportedRoute): string {
+  const { title, path, openGraph } = route;
+
+  // Wzorzec błędu: "Coś - | Site" lub "- | Site"
+  if (!/ - \|/.test(title) && !/^-\s*\|/.test(title)) {
+    return title;
+  }
+
+  // Strona sklepu
+  if (path === "/shop/" || path.startsWith("/shop/page/")) {
+    return "Sprzedaż maszyn leśnych | BiomasaPortal";
+  }
+
+  // Strona produktu — OG title zawiera czystą nazwę produktu
+  const productName = openGraph?.title?.trim() || title.replace(/\s*-\s*\|.*$/, "").trim();
+  if (productName) {
+    return `${productName} | Maszyny Leśne – BiomasaPortal`;
+  }
+
+  return "Maszyny Leśne – BiomasaPortal";
+}
+
 export function buildRouteMetadata(route: ExportedRoute): Metadata {
+  const cleanTitle = sanitizeRouteTitle(route);
+
   return {
-    title: route.title,
+    title: cleanTitle,
     description: route.metaDescription || undefined,
     alternates: {
       canonical: route.canonicalUrl || route.path,
     },
     robots: parseRobots(route.robots),
-    openGraph: route.openGraph.title
+    openGraph: (route.openGraph.title || cleanTitle)
       ? {
-          title: route.openGraph.title,
+          title: route.openGraph.title || cleanTitle,
           description:
             route.openGraph.description || route.metaDescription || undefined,
           type:
@@ -259,7 +288,7 @@ export function buildRouteMetadata(route: ExportedRoute): Metadata {
             route.twitterCard === "summary_large_image"
               ? "summary_large_image"
               : "summary",
-          title: route.openGraph.title || route.title,
+          title: route.openGraph.title || cleanTitle,
           description:
             route.openGraph.description || route.metaDescription || undefined,
           images: route.openGraph.image ? [route.openGraph.image] : undefined,
