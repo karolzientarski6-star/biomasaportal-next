@@ -41,10 +41,19 @@ function toRelativeSiteUrl(url: string) {
 function toAbsoluteSiteUrl(url: string) {
   const normalized = normalizeUrl(url);
 
+  if (normalized.startsWith("data:")) {
+    return normalized;
+  }
+
+  // Convert absolute biomasaportal.pl /wp-content/ URLs to relative paths
+  // so Vercel serves them from /public/wp-content/ (avoids 404s after DNS migration)
+  if (normalized.startsWith(`${ABSOLUTE_SITE_URL}/wp-content/`)) {
+    return normalized.slice(ABSOLUTE_SITE_URL.length);
+  }
+
   if (
     normalized.startsWith("http://") ||
-    normalized.startsWith("https://") ||
-    normalized.startsWith("data:")
+    normalized.startsWith("https://")
   ) {
     return normalized;
   }
