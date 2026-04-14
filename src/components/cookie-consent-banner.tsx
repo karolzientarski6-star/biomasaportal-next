@@ -130,15 +130,12 @@ export function CookieConsentBanner() {
       {showMiniBanner ? (
         <div className="cookie-mini-shell" role="dialog" aria-modal="false">
           <section className="cookie-mini-banner" aria-label="Baner cookies">
-            <div className="cookie-mini-banner__icon" aria-hidden="true">
-              Cookies
-            </div>
             <div className="cookie-mini-banner__copy">
-              <h2>Ta strona uzywa plikow cookies</h2>
+              <h2>🍪 Ta strona używa plików cookies</h2>
               <p>
-                Uzywamy cookies do analizy ruchu i personalizacji tresci. Mozesz
-                zaakceptowac wszystkie albo dostosowac swoje preferencje.{" "}
-                <Link href="/polityka-prywatnosci/">Dowiedz sie wiecej</Link>
+                Używamy cookies do analizy ruchu i personalizacji treści. Możesz
+                zaakceptować wszystkie albo dostosować swoje preferencje.{" "}
+                <Link href="/polityka-prywatnosci/">Dowiedz się więcej</Link>
               </p>
             </div>
             <div className="cookie-mini-banner__actions">
@@ -147,7 +144,7 @@ export function CookieConsentBanner() {
                 className="cookie-button cookie-button--muted"
                 onClick={handleRejectOptional}
               >
-                Odrzuc wszystkie
+                Odrzuć wszystkie
               </button>
               <button
                 type="button"

@@ -244,6 +244,76 @@ function renderSearchResults(
   }
 }
 
+function setupOffCanvas(root: ParentNode) {
+  const offCanvas = root.querySelector<HTMLElement>(".e-off-canvas");
+
+  if (!offCanvas) {
+    return;
+  }
+
+  // Ensure hidden state is set initially
+  if (!offCanvas.hasAttribute("aria-hidden")) {
+    offCanvas.setAttribute("aria-hidden", "true");
+  }
+
+  const openPanel = () => {
+    offCanvas.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  };
+
+  const closePanel = () => {
+    offCanvas.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  // Toggle buttons: hamburger / menu-toggle
+  const toggleButtons = root.querySelectorAll<HTMLElement>(
+    ".elementor-menu-toggle, .e-off-canvas-toggle, [data-e-toggle], [aria-controls]",
+  );
+
+  for (const btn of toggleButtons) {
+    if (btn.dataset.codexOffCanvasBound) continue;
+    btn.dataset.codexOffCanvasBound = "true";
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const isHidden = offCanvas.getAttribute("aria-hidden") !== "false";
+      if (isHidden) {
+        openPanel();
+      } else {
+        closePanel();
+      }
+    });
+  }
+
+  // Close buttons inside off-canvas
+  const closeButtons = offCanvas.querySelectorAll<HTMLElement>(
+    ".e-off-canvas__close, .elementor-off-canvas__close, [class*='close']",
+  );
+
+  for (const btn of closeButtons) {
+    if (btn.dataset.codexOffCanvasCloseBound) continue;
+    btn.dataset.codexOffCanvasCloseBound = "true";
+    btn.addEventListener("click", closePanel);
+  }
+
+  // Click on backdrop overlay to close
+  const backdrop = offCanvas.querySelector<HTMLElement>(".e-off-canvas__overlay, .e-off-canvas__backdrop");
+  if (backdrop && !backdrop.dataset.codexOffCanvasBackdropBound) {
+    backdrop.dataset.codexOffCanvasBackdropBound = "true";
+    backdrop.addEventListener("click", closePanel);
+  }
+
+  // Esc key to close
+  if (!document.body.dataset.codexOffCanvasEscBound) {
+    document.body.dataset.codexOffCanvasEscBound = "true";
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closePanel();
+      }
+    });
+  }
+}
+
 function setupBlogSearch(root: ParentNode, path: string) {
   if (!path.startsWith("/wpisy")) {
     return;
@@ -420,6 +490,7 @@ export function WordPressInteractiveEnhancer({
       setupFaq(root);
     }
 
+    setupOffCanvas(root);
     setupBlogSearch(root, path);
     applyAosAttributes(root);
     window.dispatchEvent(new Event("codex:aos-refresh"));

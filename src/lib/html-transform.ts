@@ -49,6 +49,11 @@ function toAbsoluteSiteUrl(url: string) {
     return normalized;
   }
 
+  // Keep /wp-content/ as relative — served by Vercel from /public/wp-content/
+  if (normalized.startsWith("/wp-content/")) {
+    return normalized;
+  }
+
   if (normalized.startsWith("/")) {
     return `${ABSOLUTE_SITE_URL}${normalized}`;
   }
@@ -245,7 +250,15 @@ export function transformExportedHtml(html: string) {
       return;
     }
 
-    $(element).attr("srcset", rewriteSrcSet(srcSet));
+    // If the srcset refers to /wp-content/ resources (resized variants), strip it
+    // so the browser uses the src attribute instead (which we serve from /public/).
+    // This prevents 404s on mobile where the browser prefers smaller srcset sizes.
+    if (srcSet.includes("/wp-content/")) {
+      $(element).removeAttr("srcset");
+      $(element).removeAttr("sizes");
+    } else {
+      $(element).attr("srcset", rewriteSrcSet(srcSet));
+    }
   });
 
   $("[poster]").each((_, element) => {

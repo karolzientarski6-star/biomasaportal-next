@@ -85,7 +85,7 @@ export async function SiteShell({ children }: SiteShellProps) {
           <address className="site-footer__contact">
             <a href="tel:+48511430886">+48 511 430 886</a>
             {" · "}
-            <a href="mailto:kontakt@maxdigital.pl">kontakt@maxdigital.pl</a>
+            <a href="mailto:kontakt@biomasaportal.pl">kontakt@biomasaportal.pl</a>
           </address>
         </div>
       </footer>
