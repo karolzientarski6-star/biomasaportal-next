@@ -1658,14 +1658,19 @@ img {
 }
 
 @media (min-width: 1025px) {
-  .mirror-html .elementor-nav-menu--main .biomasa-mega-menu {
+  /* Positioning context = sticky header container, so panel starts at the accent line */
+  .mirror-html header.elementor-location-header .e-con.e-parent {
     position: relative;
+  }
+
+  .mirror-html .elementor-nav-menu--main .biomasa-mega-menu {
+    position: static;
   }
 
   .mirror-html .elementor-nav-menu--main .biomasa-mega-menu > .biomasa-mega-menu__panel {
     display: none !important;
     position: absolute !important;
-    top: calc(100% + 8px);
+    top: 100%;
     left: 50%;
     z-index: 50;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1673,7 +1678,7 @@ img {
     width: min(980px, calc(100vw - 56px));
     padding: 16px;
     border: 1px solid rgba(214, 216, 202, 0.82);
-    border-radius: 24px;
+    border-radius: 0 0 24px 24px;
     background: rgba(255, 255, 255, 0.98);
     box-shadow: 0 30px 50px rgba(23, 49, 38, 0.14);
     transform: translateX(-50%);
