@@ -1,14 +1,2 @@
-# Git LFS — duże pliki binarne (obrazy WP uploads)
-# Vercel obsługuje Git LFS automatycznie na Pro planie
-# https://vercel.com/docs/deployments/configure-a-build/git-lfs
-
-public/wp-content/uploads/2025/**/*.jpg filter=lfs diff=lfs merge=lfs -text
-public/wp-content/uploads/2025/**/*.jpeg filter=lfs diff=lfs merge=lfs -text
-public/wp-content/uploads/2025/**/*.png filter=lfs diff=lfs merge=lfs -text
-public/wp-content/uploads/2025/**/*.webp filter=lfs diff=lfs merge=lfs -text
-public/wp-content/uploads/2025/**/*.gif filter=lfs diff=lfs merge=lfs -text
-public/wp-content/uploads/2026/**/*.jpg filter=lfs diff=lfs merge=lfs -text
-public/wp-content/uploads/2026/**/*.jpeg filter=lfs diff=lfs merge=lfs -text
-public/wp-content/uploads/2026/**/*.png filter=lfs diff=lfs merge=lfs -text
-public/wp-content/uploads/2026/**/*.webp filter=lfs diff=lfs merge=lfs -text
-public/wp-content/uploads/2026/**/*.gif filter=lfs diff=lfs merge=lfs -text
+# Obrazy WP uploads — zwykłe pliki git (nie LFS)
+# Vercel Hobby nie obsługuje LFS, więc trzymamy jako regularne obiekty git

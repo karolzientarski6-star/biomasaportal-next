@@ -53,8 +53,5 @@ uploads-needed.txt
 all-wp-files.txt
 wp-content-needed.tar.gz
 
-# Obrazy WP — śledzone przez Git LFS (patrz .gitattributes)
+# Obrazy WP — śledzone przez Git (patrz .gitattributes dla LFS)
 # Pliki CSS/JS z /public/wp-content/plugins/ i /themes/ są w Git normalnie
-# Duże pliki binarne (zdjęcia produktów, uploads) przez LFS
-public/wp-content/uploads/2025/**
-public/wp-content/uploads/2026/**
