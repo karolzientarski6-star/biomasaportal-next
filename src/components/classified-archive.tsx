@@ -3,6 +3,7 @@ import {
   getClassifiedCategories,
   getClassifieds,
 } from "@/lib/wordpress-export";
+import { normalizeWpImageUrl } from "@/lib/html-transform";
 import { SiteShell } from "./site-shell";
 
 function formatCurrency(value?: number | null) {
@@ -67,7 +68,7 @@ export async function ClassifiedArchive() {
                       className="classified-card"
                     >
                       <div className="classified-card__image">
-                        {item.image ? <img src={item.image} alt={item.title} /> : null}
+                        {normalizeWpImageUrl(item.image) ? <img src={normalizeWpImageUrl(item.image)!} alt={item.title} /> : null}
                       </div>
                       <div className="classified-card__content">
                         <div className="button-row">

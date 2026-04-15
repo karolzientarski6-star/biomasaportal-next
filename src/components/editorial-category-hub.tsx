@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { BlogIndexItem } from "@/lib/blog-index";
 import type { EditorialCategory } from "@/lib/editorial-categories";
+import { normalizeWpImageUrl } from "@/lib/html-transform";
 
 type EditorialCategorySummary = {
   category: EditorialCategory;
@@ -78,7 +79,7 @@ export function EditorialCategoryHub({
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={leadPost.image}
+                        src={normalizeWpImageUrl(leadPost.image) ?? ""}
                         alt={category.name}
                         loading="lazy"
                         decoding="async"
@@ -151,7 +152,7 @@ export function EditorialCategoryHub({
               {item.image ? (
                 <Link href={item.path} className="editorial-hub-post-card__image">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.image} alt={item.title} loading="lazy" decoding="async" />
+                  <img src={normalizeWpImageUrl(item.image) ?? ""} alt={item.title} loading="lazy" decoding="async" />
                 </Link>
               ) : null}
               <div className="editorial-hub-post-card__body">

@@ -296,6 +296,19 @@ export function transformExportedHtml(html: string) {
   return $("body").html() ?? $.root().html() ?? html;
 }
 
+/**
+ * Normalise a WP image URL so it resolves from Vercel's /public/.
+ * Converts https://biomasaportal.pl/wp-content/... → /wp-content/...
+ * Leaves relative paths and non-WP URLs unchanged.
+ */
+export function normalizeWpImageUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith(`${ABSOLUTE_SITE_URL}/wp-content/`)) {
+    return url.slice(ABSOLUTE_SITE_URL.length);
+  }
+  return url;
+}
+
 type HtmlSlot = {
   selector: string;
   slotId: string;

@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { injectHtmlSlots, transformExportedHtml } from "@/lib/html-transform";
+import { injectHtmlSlots, transformExportedHtml, normalizeWpImageUrl } from "@/lib/html-transform";
 import {
   getEditorialArticleByPath,
   getEditorialCategoryForArticle,
@@ -142,7 +142,7 @@ function EditorialArticleContent({
                             >
                               <div className="elementor-post__thumbnail">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={item.image} alt={item.title} loading="lazy" />
+                                <img src={normalizeWpImageUrl(item.image) ?? ""} alt={item.title} loading="lazy" />
                               </div>
                             </Link>
                           ) : null}
