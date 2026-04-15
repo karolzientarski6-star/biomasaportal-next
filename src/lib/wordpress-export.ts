@@ -4,6 +4,17 @@ import path from "node:path";
 import { load } from "cheerio";
 import { cache } from "react";
 
+const ABSOLUTE_SITE_URL = "https://biomasaportal.pl";
+
+/** Convert https://biomasaportal.pl/wp-content/... → /wp-content/... so Vercel serves from /public/ */
+function normalizeWpUrl(url: string | null | undefined): string {
+  if (!url) return url as string;
+  if (url.startsWith(`${ABSOLUTE_SITE_URL}/wp-content/`)) {
+    return url.slice(ABSOLUTE_SITE_URL.length);
+  }
+  return url;
+}
+
 export type ExportedRouteSeo = {
   canonicalUrl: string;
   robots: string;
@@ -194,7 +205,19 @@ export const getRouteByPath = cache(async function getRouteByPathCached(
     return null;
   }
 
-  return readJson<ExportedRoute>(path.join(ROUTES_DIR, entry.file));
+  const route = await readJson<ExportedRoute>(path.join(ROUTES_DIR, entry.file));
+  if (!route) return null;
+
+  // Normalize all absolute biomasaportal.pl/wp-content/ URLs to relative paths
+  // so Vercel serves them from /public/wp-content/ without cross-origin redirects
+  return {
+    ...route,
+    stylesheets: route.stylesheets.map(normalizeWpUrl),
+    openGraph: {
+      ...route.openGraph,
+      image: normalizeWpUrl(route.openGraph.image),
+    },
+  };
 });
 
 export const getAllRoutes = cache(async function getAllRoutesCached() {
@@ -210,7 +233,16 @@ export const getAllRoutes = cache(async function getAllRoutesCached() {
     ),
   );
 
-  return routes.filter((route): route is ExportedRoute => Boolean(route));
+  return routes
+    .filter((route): route is ExportedRoute => Boolean(route))
+    .map((route) => ({
+      ...route,
+      stylesheets: route.stylesheets.map(normalizeWpUrl),
+      openGraph: {
+        ...route.openGraph,
+        image: normalizeWpUrl(route.openGraph.image),
+      },
+    }));
 });
 
 function parseRobots(robots: string): Metadata["robots"] {
@@ -336,7 +368,7 @@ export const getBlogSearchIndex = cache(async function getBlogSearchIndexCached(
       path: route.path,
       title: route.openGraph.title || route.title,
       excerpt: extractExcerptFromHtml(route),
-      image: route.openGraph.image || null,
+      image: normalizeWpUrl(route.openGraph.image) || null,
       canonicalUrl: route.canonicalUrl || route.url,
       lastModified: readSchemaTimestamp(route),
     }))
