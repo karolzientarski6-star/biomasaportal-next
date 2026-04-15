@@ -1804,6 +1804,15 @@ img {
   .cookie-preference-card {
     padding: 18px;
   }
+
+  .cookie-preference-card__top {
+    gap: 12px;
+  }
+
+  .cookie-switch {
+    flex-shrink: 0;
+    align-self: center;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
