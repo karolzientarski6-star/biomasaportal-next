@@ -28,13 +28,32 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Długi cache dla statycznych assetów WP (obrazy, CSS, JS)
-        // serwowanych z /public/wp-content/
-        source: "/wp-content/:path*",
+        // Obrazy WP — długi cache, treść się nie zmienia po URL
+        source: "/wp-content/uploads/:path*",
         headers: [
           {
             key: "Cache-Control",
             value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        // Elementor CSS / JS — krótki cache, pliki mogą być aktualizowane
+        source: "/wp-content/uploads/elementor/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, stale-while-revalidate=3600",
+          },
+        ],
+      },
+      {
+        // Pozostałe assety WP (themes, plugins) — umiarkowany cache
+        source: "/wp-content/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=604800, stale-while-revalidate=86400",
           },
         ],
       },

@@ -293,7 +293,8 @@ export function transformExportedHtml(html: string) {
     }
   });
 
-  return $("body").html() ?? $.root().html() ?? html;
+  const output = $("body").html() ?? $.root().html() ?? html;
+  return output.replaceAll("kontakt@maxdigital.pl", "kontakt@biomasaportal.pl");
 }
 
 /**
