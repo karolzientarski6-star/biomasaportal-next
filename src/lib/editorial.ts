@@ -173,6 +173,8 @@ export function extractFaqSchemaJsonLd(value: string) {
     .filter(Boolean);
 }
 
+const ABSOLUTE_SITE_URL = "https://biomasaportal.pl";
+
 export function sanitizeEditorialHtml(html: string) {
   const $ = load(html || "");
   $("script").remove();
@@ -181,6 +183,19 @@ export function sanitizeEditorialHtml(html: string) {
     const image = $(element);
     image.attr("decoding", "async");
     image.attr("loading", index === 0 ? "eager" : "lazy");
+
+    // Normalize absolute WP URLs → relative so Vercel serves them from /public/
+    const src = image.attr("src");
+    if (src?.startsWith(`${ABSOLUTE_SITE_URL}/wp-content/`)) {
+      image.attr("src", src.slice(ABSOLUTE_SITE_URL.length));
+    }
+
+    // Strip srcset for WP images — resized variants don't exist in /public/
+    const srcset = image.attr("srcset") ?? "";
+    if (srcset.includes("/wp-content/")) {
+      image.removeAttr("srcset");
+      image.removeAttr("sizes");
+    }
   });
 
   return $.root().html() ?? html;
@@ -197,14 +212,12 @@ export function extractEditorialHeroImage(html: string) {
     return null;
   }
 
-  if (src.startsWith("http://") || src.startsWith("https://")) {
-    return src;
+  // Return relative path so Vercel serves the file from /public/
+  if (src.startsWith(`${ABSOLUTE_SITE_URL}/wp-content/`)) {
+    return src.slice(ABSOLUTE_SITE_URL.length);
   }
 
-  if (src.startsWith("/")) {
-    return `https://biomasaportal.pl${src}`;
-  }
-
+  // Already relative or external URL — keep as-is
   return src;
 }
 

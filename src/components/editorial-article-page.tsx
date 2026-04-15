@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { injectHtmlSlots, transformExportedHtml, normalizeWpImageUrl } from "@/lib/html-transform";
+import { normalizeWpImageUrl } from "@/lib/html-transform";
 import {
   getEditorialArticleByPath,
   getEditorialCategoryForArticle,
@@ -10,28 +10,9 @@ import {
   type EditorialArticle,
 } from "@/lib/editorial";
 import { getCombinedBlogIndex } from "@/lib/blog-index";
-import { getRouteByPath } from "@/lib/wordpress-export";
-import { WordPressAssets } from "@/components/wordpress-assets";
-import { WordPressBodyClass } from "@/components/wordpress-body-class";
+import { SiteShell } from "@/components/site-shell";
 import { WordPressInteractiveEnhancer } from "@/components/wordpress-interactive-enhancer";
 import { WordPressSeoScripts } from "@/components/wordpress-seo-scripts";
-
-const TEMPLATE_ROUTE_PATH =
-  "/dofinansowanie-do-pieca-na-pellet-czyste-powietrze-2026-warunki-i-kwoty/";
-
-function splitHtmlBySlot(html: string, slotId: string) {
-  const marker = `<div data-next-slot="${slotId}"></div>`;
-  const markerIndex = html.indexOf(marker);
-
-  if (markerIndex === -1) {
-    return [html];
-  }
-
-  const before = html.slice(0, markerIndex);
-  const after = html.slice(markerIndex + marker.length);
-
-  return [before, after];
-}
 
 function buildArticleSchema(article: EditorialArticle) {
   const category = getEditorialCategoryForArticle(article);
@@ -205,29 +186,19 @@ function EditorialArticleContent({
 }
 
 export async function EditorialArticlePage({ path }: { path: string }) {
-  const [article, templateRoute, relatedIndex] = await Promise.all([
+  const [article, relatedIndex] = await Promise.all([
     getEditorialArticleByPath(path),
-    getRouteByPath(TEMPLATE_ROUTE_PATH),
     getCombinedBlogIndex(),
   ]);
 
-  if (!article || article.publicationStatus !== "published" || !templateRoute) {
+  if (!article || article.publicationStatus !== "published") {
     notFound();
   }
 
-  const slotId = "editorial-article-slot";
-  const html = transformExportedHtml(
-    injectHtmlSlots(templateRoute.html, [
-      { selector: '[data-elementor-type="wp-post"]', slotId },
-    ]),
-  );
-  const [before, after] = splitHtmlBySlot(html, slotId);
   const relatedItems = selectRelatedItems(article, relatedIndex);
 
   return (
     <>
-      <WordPressBodyClass className={`${templateRoute.bodyClass} editorial-article-page`} />
-      <WordPressAssets stylesheets={templateRoute.stylesheets} />
       <WordPressSeoScripts
         schemaJsonLd={[
           buildArticleSchema(article),
@@ -239,20 +210,20 @@ export async function EditorialArticlePage({ path }: { path: string }) {
         featuredImage={article.heroImage}
         isSinglePost
       />
-      <div
-        className="wp-mirror-page wp-mirror-page--single-post"
-        style={
-          article.heroImage
-            ? ({
-                ["--wp-featured-image" as string]: `url("${article.heroImage}")`,
-              } as CSSProperties)
-            : undefined
-        }
-      >
-        <div className="mirror-html" dangerouslySetInnerHTML={{ __html: before }} />
-        <EditorialArticleContent article={article} relatedItems={relatedItems} />
-        <div className="mirror-html" dangerouslySetInnerHTML={{ __html: after }} />
-      </div>
+      <SiteShell>
+        <div
+          className="wp-mirror-page wp-mirror-page--single-post"
+          style={
+            article.heroImage
+              ? ({
+                  ["--wp-featured-image" as string]: `url("${article.heroImage}")`,
+                } as CSSProperties)
+              : undefined
+          }
+        >
+          <EditorialArticleContent article={article} relatedItems={relatedItems} />
+        </div>
+      </SiteShell>
     </>
   );
 }
