@@ -97,6 +97,54 @@ export type BlogSearchEntry = {
 const DATA_DIR = path.join(process.cwd(), "data", "wordpress");
 const ROUTES_DIR = path.join(DATA_DIR, "routes");
 
+const ALWAYS_DROP_STYLESHEET_PATTERNS = [
+  "/plugins/cookie-notice/css/front.min.css",
+  "/assets/lib/animations/styles/",
+];
+
+const CONDITIONAL_WIDGET_STYLES: Array<{
+  pattern: string;
+  marker: string;
+}> = [
+  {
+    pattern: "/assets/css/widget-search-form.min.css",
+    marker: "elementor-widget-search-form",
+  },
+  {
+    pattern: "/assets/css/widget-post-info.min.css",
+    marker: "elementor-widget-post-info",
+  },
+  {
+    pattern: "/assets/css/widget-image-box.min.css",
+    marker: "elementor-widget-image-box",
+  },
+  {
+    pattern: "/assets/css/widget-menu-anchor.min.css",
+    marker: "elementor-widget-menu-anchor",
+  },
+  {
+    pattern: "/assets/css/widget-icon-list.min.css",
+    marker: "elementor-widget-icon-list",
+  },
+  {
+    pattern: "/assets/css/widget-divider.min.css",
+    marker: "elementor-widget-divider",
+  },
+  {
+    pattern: "/assets/css/widget-spacer.min.css",
+    marker: "elementor-widget-spacer",
+  },
+];
+
+const GOOGLE_FONT_ALLOWLIST = new Set([
+  "roboto",
+  "raleway",
+  "inter",
+  "dm sans",
+  "poppins",
+  "manrope",
+]);
+
 const readJson = cache(async function readJsonFile<T>(
   filePath: string,
 ): Promise<T | null> {
@@ -180,6 +228,69 @@ function extractExcerptFromHtml(route: ExportedRoute) {
   return paragraph.slice(0, 220);
 }
 
+function isCommerceRoute(route: ExportedRoute) {
+  return (
+    route.path.startsWith("/shop") ||
+    route.path.startsWith("/product/") ||
+    route.path.startsWith("/product-category/") ||
+    route.bodyClass.includes("single-product") ||
+    route.bodyClass.includes("tax-product_cat") ||
+    route.bodyClass.includes("tax-product_tag") ||
+    route.bodyClass.includes("post-type-archive-product") ||
+    route.bodyClass.includes("woocommerce-page")
+  );
+}
+
+function shouldKeepGoogleFontStylesheet(url: string) {
+  if (!url.includes("fonts.googleapis.com/css")) {
+    return true;
+  }
+
+  const decodedUrl = decodeURIComponent(url).toLowerCase();
+  const familyMatch = decodedUrl.match(/[?&]family=([^&]+)/);
+  if (!familyMatch?.[1]) {
+    return true;
+  }
+
+  const family = familyMatch[1].replace(/\+/g, " ").split(":")[0].trim();
+  return GOOGLE_FONT_ALLOWLIST.has(family);
+}
+
+function optimizeRouteStylesheets(route: ExportedRoute) {
+  const html = route.html;
+  const commerceRoute = isCommerceRoute(route);
+  const seen = new Set<string>();
+
+  return route.stylesheets
+    .filter((href) => Boolean(href))
+    .filter((href) =>
+      ALWAYS_DROP_STYLESHEET_PATTERNS.every((pattern) => !href.includes(pattern)),
+    )
+    .filter((href) => {
+      if (
+        !commerceRoute &&
+        href.includes("/plugins/woocommerce/assets/css/")
+      ) {
+        return false;
+      }
+
+      return true;
+    })
+    .filter((href) =>
+      CONDITIONAL_WIDGET_STYLES.every(
+        ({ pattern, marker }) => !href.includes(pattern) || html.includes(marker),
+      ),
+    )
+    .filter((href) => shouldKeepGoogleFontStylesheet(href))
+    .filter((href) => {
+      if (seen.has(href)) {
+        return false;
+      }
+      seen.add(href);
+      return true;
+    });
+}
+
 export function normalizePath(routePath: string) {
   if (!routePath || routePath === "/") {
     return "/";
@@ -212,7 +323,10 @@ export const getRouteByPath = cache(async function getRouteByPathCached(
   // so Vercel serves them from /public/wp-content/ without cross-origin redirects
   return {
     ...route,
-    stylesheets: route.stylesheets.map(normalizeWpUrl),
+    stylesheets: optimizeRouteStylesheets({
+      ...route,
+      stylesheets: route.stylesheets.map(normalizeWpUrl),
+    }),
     openGraph: {
       ...route.openGraph,
       image: normalizeWpUrl(route.openGraph.image),
@@ -237,7 +351,10 @@ export const getAllRoutes = cache(async function getAllRoutesCached() {
     .filter((route): route is ExportedRoute => Boolean(route))
     .map((route) => ({
       ...route,
-      stylesheets: route.stylesheets.map(normalizeWpUrl),
+      stylesheets: optimizeRouteStylesheets({
+        ...route,
+        stylesheets: route.stylesheets.map(normalizeWpUrl),
+      }),
       openGraph: {
         ...route.openGraph,
         image: normalizeWpUrl(route.openGraph.image),

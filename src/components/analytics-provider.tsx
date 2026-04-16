@@ -3,6 +3,7 @@
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
+import { useConsent } from "@/components/consent-provider";
 import {
   DEFAULT_GA_MEASUREMENT_ID,
   trackEvent,
@@ -284,8 +285,10 @@ function getConsentBootstrapScript() {
 export function AnalyticsProvider({
   measurementId = DEFAULT_GA_MEASUREMENT_ID,
 }: AnalyticsProviderProps) {
+  const { consent, hasStoredConsent } = useConsent();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const canLoadAnalytics = consent.analytics || consent.marketing;
   const canonicalPath = useMemo(
     () => getCanonicalPath(pathname || "/", new URLSearchParams(searchParams?.toString())),
     [pathname, searchParams],
@@ -294,6 +297,10 @@ export function AnalyticsProvider({
   const trackedPageEventsRef = useRef<string>("");
 
   useEffect(() => {
+    if (!canLoadAnalytics) {
+      return;
+    }
+
     trackedMilestonesRef.current = new Set();
     trackPageView(canonicalPath, measurementId);
 
@@ -309,9 +316,13 @@ export function AnalyticsProvider({
     return () => {
       window.clearTimeout(timer);
     };
-  }, [canonicalPath, measurementId, pathname]);
+  }, [canLoadAnalytics, canonicalPath, measurementId, pathname]);
 
   useEffect(() => {
+    if (!canLoadAnalytics) {
+      return;
+    }
+
     const onScroll = () => {
       const scrollHeight =
         document.documentElement.scrollHeight - window.innerHeight;
@@ -339,9 +350,13 @@ export function AnalyticsProvider({
     return () => {
       window.removeEventListener("scroll", onScroll);
     };
-  }, [canonicalPath, measurementId]);
+  }, [canLoadAnalytics, canonicalPath, measurementId]);
 
   useEffect(() => {
+    if (!canLoadAnalytics) {
+      return;
+    }
+
     const onClick = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target : null;
       const interactive = target?.closest("a, button, [role='button']");
@@ -622,30 +637,46 @@ export function AnalyticsProvider({
         onConsentUpdated as EventListener,
       );
     };
-  }, [canonicalPath, measurementId, pathname]);
+  }, [canLoadAnalytics, canonicalPath, measurementId, pathname]);
+
+  useEffect(() => {
+    if (!hasStoredConsent || !canLoadAnalytics) {
+      return;
+    }
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function gtag() {
+      window.dataLayer?.push(arguments);
+    };
+    window.gtag("consent", "update", toGoogleConsentState(consent, "update"));
+  }, [canLoadAnalytics, consent, hasStoredConsent]);
 
   return (
     <>
       <Script id="ga4-consent-default" strategy="beforeInteractive">
         {getConsentBootstrapScript()}
       </Script>
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
-        strategy="afterInteractive"
-      />
-      <Script id="ga4-init" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          window.gtag = gtag;
-          gtag('js', new Date());
-          gtag('config', '${measurementId}', {
-            send_page_view: false,
-            allow_google_signals: true,
-            allow_ad_personalization_signals: false
-          });
-        `}
-      </Script>
+      {canLoadAnalytics ? (
+        <>
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
+            strategy="afterInteractive"
+          />
+          <Script id="ga4-init" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              window.gtag = gtag;
+              gtag('js', new Date());
+              gtag('config', '${measurementId}', {
+                send_page_view: false,
+                allow_google_signals: true,
+                allow_ad_personalization_signals: false
+              });
+            `}
+          </Script>
+        </>
+      ) : null}
     </>
   );
 }
