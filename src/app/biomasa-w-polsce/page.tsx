@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { EditorialCategoryHub } from "@/components/editorial-category-hub";
-import { SiteShell } from "@/components/site-shell";
+import { WordPressFramePage } from "@/components/wordpress-frame-page";
 import { buildEditorialArchiveMetadata } from "@/lib/editorial";
 import { getCombinedBlogIndex } from "@/lib/blog-index";
 import { EDITORIAL_CATEGORIES } from "@/lib/editorial-categories";
+import { getRouteByPath } from "@/lib/wordpress-export";
+
+const TEMPLATE_PATH = "/wpisy/";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildEditorialArchiveMetadata(
@@ -14,7 +18,14 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BiomasaInPolandPage() {
-  const items = await getCombinedBlogIndex();
+  const [templateRoute, items] = await Promise.all([
+    getRouteByPath(TEMPLATE_PATH),
+    getCombinedBlogIndex(),
+  ]);
+
+  if (!templateRoute) {
+    notFound();
+  }
 
   const categories = EDITORIAL_CATEGORIES.map((category) => ({
     category,
@@ -23,8 +34,8 @@ export default async function BiomasaInPolandPage() {
   }));
 
   return (
-    <SiteShell>
+    <WordPressFramePage path="/biomasa-w-polsce/" route={templateRoute}>
       <EditorialCategoryHub categories={categories} latestItems={items} />
-    </SiteShell>
+    </WordPressFramePage>
   );
 }

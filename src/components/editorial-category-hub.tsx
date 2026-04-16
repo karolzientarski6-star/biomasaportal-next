@@ -25,7 +25,7 @@ export function EditorialCategoryHub({
   latestItems,
 }: EditorialCategoryHubProps) {
   return (
-    <div className="editorial-hub-page">
+    <div className="mirror-html editorial-hub-page">
       <section className="editorial-hub-hero" data-aos="fade-up">
         <div className="editorial-hub-hero__copy" data-aos="fade-right" data-aos-delay="40">
           <p className="page-card__eyebrow">Biomasa w Polsce</p>

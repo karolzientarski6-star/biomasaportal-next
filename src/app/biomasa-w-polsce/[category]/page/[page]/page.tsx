@@ -4,7 +4,10 @@ import { EditorialCategoryArchivePage } from "@/components/editorial-category-ar
 import { buildEditorialArchiveMetadata } from "@/lib/editorial";
 import { getBlogIndexByCategory } from "@/lib/blog-index";
 import { getEditorialCategoryBySlug } from "@/lib/editorial-categories";
+import { extractElementorPostsWidgetSignatures } from "@/lib/elementor-posts-widget";
+import { getRouteByPath } from "@/lib/wordpress-export";
 
+const TEMPLATE_PATH = "/wpisy/";
 const POSTS_PER_PAGE = 12;
 
 type EditorialCategoryPaginationProps = {
@@ -45,19 +48,32 @@ export default async function EditorialCategoryPaginationPage({
     notFound();
   }
 
-  const items = await getBlogIndexByCategory(category.slug);
+  const [templateRoute, items] = await Promise.all([
+    getRouteByPath(TEMPLATE_PATH),
+    getBlogIndexByCategory(category.slug),
+  ]);
+
+  if (!templateRoute) {
+    notFound();
+  }
 
   const pageCount = Math.max(1, Math.ceil(items.length / POSTS_PER_PAGE));
   if (page > pageCount) {
     notFound();
   }
 
+  const mainWidgetSignature =
+    extractElementorPostsWidgetSignatures(templateRoute.html)[0] ?? null;
+
   return (
     <EditorialCategoryArchivePage
+      path={`/biomasa-w-polsce/${category.slug}/page/${page}/`}
+      route={templateRoute}
       category={category}
       items={items}
       currentPage={page}
       perPage={POSTS_PER_PAGE}
+      widgetSignature={mainWidgetSignature}
     />
   );
 }
