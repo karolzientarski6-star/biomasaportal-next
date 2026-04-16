@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { load } from "cheerio";
+import { load, type CheerioAPI, type Cheerio } from "cheerio";
 import { notFound } from "next/navigation";
 import {
   getEditorialArticleByPath,
@@ -14,9 +14,6 @@ import { WordPressBodyClass } from "@/components/wordpress-body-class";
 import { WordPressInteractiveEnhancer } from "@/components/wordpress-interactive-enhancer";
 import { WordPressSeoScripts } from "@/components/wordpress-seo-scripts";
 
-// A published WP single-post route used as the HTML shell for editorial articles.
-// Its stylesheets and Elementor structure give editorial posts the same visual
-// appearance as regular WordPress posts.
 const WP_SINGLE_POST_TEMPLATE_PATH = "/cena-zrebki-drzewnej-2026/";
 
 function buildArticleSchema(article: EditorialArticle) {
@@ -26,8 +23,10 @@ function buildArticleSchema(article: EditorialArticle) {
     headline: article.title,
     description: article.metaDescription,
     image: article.heroImage ? [article.heroImage] : undefined,
-    datePublished: article.publishedAt ?? article.scheduledFor ?? new Date().toISOString(),
-    dateModified: article.publishedAt ?? article.scheduledFor ?? new Date().toISOString(),
+    datePublished:
+      article.publishedAt ?? article.scheduledFor ?? new Date().toISOString(),
+    dateModified:
+      article.publishedAt ?? article.scheduledFor ?? new Date().toISOString(),
     author: { "@type": "Organization", name: "BiomasaPortal" },
     publisher: {
       "@type": "Organization",
@@ -44,7 +43,9 @@ function buildArticleSchema(article: EditorialArticle) {
 
 function buildFaqHtml(article: EditorialArticle) {
   const entries = getEditorialFaqEntries(article.faqSchema);
-  if (!entries.length) return "";
+  if (!entries.length) {
+    return "";
+  }
 
   const items = entries
     .map(
@@ -53,39 +54,64 @@ function buildFaqHtml(article: EditorialArticle) {
     )
     .join("");
 
-  return `<section class="faq-section elementor-element elementor-widget"><div class="elementor-widget-container"><h2>Najczęściej zadawane pytania</h2><div class="faq-list">${items}</div></div></section>`;
+  return `<section class="faq-section elementor-element elementor-widget"><div class="elementor-widget-container"><h2>Najczesciej zadawane pytania</h2><div class="faq-list">${items}</div></div></section>`;
 }
 
-/**
- * Takes a WP single-post HTML export and injects editorial article content into
- * the appropriate Elementor slots, so the editorial post inherits the full WP
- * visual template (CSS, sidebar TOC, hero section, etc.).
- */
+function replaceWidgetInnerHtml(
+  widget: Cheerio<any>,
+  html: string,
+) {
+  const container = widget.find(".elementor-widget-container").first();
+
+  if (container.length) {
+    container.html(html);
+    return;
+  }
+
+  widget.html(html);
+}
+
+function replaceTemplateHeadingNodes($: CheerioAPI, articleRoot: Cheerio<any>, title: string) {
+  articleRoot
+    .find(".elementor-widget-heading .elementor-heading-title")
+    .slice(0, 2)
+    .each((_, element) => {
+      $(element).text(title);
+    });
+}
+
+function replaceTemplateBreadcrumb(articleRoot: Cheerio<any>, title: string) {
+  const breadcrumbItems = articleRoot.find(
+    ".elementor-widget-post-info .elementor-post-info__item--type-custom",
+  );
+
+  if (breadcrumbItems.length >= 2) {
+    breadcrumbItems.last().text(title);
+  }
+}
+
 function injectEditorialIntoWpTemplate(
   templateHtml: string,
   article: EditorialArticle,
 ): string {
   const $ = load(templateHtml);
+  const articleRoot = $("[data-elementor-post-type='post']").first();
 
-  // 1. Replace the title in the first heading widget.
-  const titleEl = $(".elementor-widget-heading .elementor-heading-title").first();
-  if (titleEl.length) {
-    titleEl.text(article.title);
-  }
+  replaceTemplateBreadcrumb(articleRoot, article.title);
+  replaceTemplateHeadingNodes($, articleRoot, article.title);
 
-  // 2. Replace the main text-editor content with the editorial HTML + FAQ.
-  //    The WP template has two text-editor widgets in the content section;
-  //    we fill the first with article content and remove the second.
   const faqHtml = buildFaqHtml(article);
-  const contentHtml = article.htmlContent + faqHtml;
+  const introHtml = article.metaDescription
+    ? `<p>${article.metaDescription}</p>`
+    : "";
+  const contentHtml = `${introHtml}${article.htmlContent}${faqHtml}`;
 
-  const textEditors = $(".elementor-widget-text-editor").filter((_, el) => {
-    // Exclude footer copyright text editor
+  const textEditors = articleRoot.find(".elementor-widget-text-editor").filter((_, el) => {
     const text = $(el).text().trim();
     return !text.includes("Max Digital") && text.length > 20;
   });
 
-  textEditors.first().find(".elementor-widget-container").html(contentHtml);
+  replaceWidgetInnerHtml(textEditors.first(), contentHtml);
   textEditors.slice(1).remove();
 
   return $("body").html() ?? templateHtml;
@@ -112,7 +138,7 @@ export async function EditorialArticlePage({ path }: { path: string }) {
   return (
     <>
       <WordPressBodyClass className={bodyClass} />
-      {templateRoute && <WordPressAssets stylesheets={templateRoute.stylesheets} />}
+      {templateRoute ? <WordPressAssets stylesheets={templateRoute.stylesheets} /> : null}
       <WordPressSeoScripts
         schemaJsonLd={[
           buildArticleSchema(article),
@@ -134,10 +160,7 @@ export async function EditorialArticlePage({ path }: { path: string }) {
             : undefined
         }
       >
-        <div
-          className="mirror-html"
-          dangerouslySetInnerHTML={{ __html: finalHtml }}
-        />
+        <div className="mirror-html" dangerouslySetInnerHTML={{ __html: finalHtml }} />
       </div>
     </>
   );

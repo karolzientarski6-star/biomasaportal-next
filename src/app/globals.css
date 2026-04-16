@@ -832,7 +832,9 @@ img {
 }
 
 .blog-archive-grid-root .elementor-post__thumbnail__link {
+  margin: 15px 15px 0;
   aspect-ratio: 3 / 2;
+  border-radius: 4px;
 }
 
 .blog-archive-grid-root .elementor-post__thumbnail__link img,
