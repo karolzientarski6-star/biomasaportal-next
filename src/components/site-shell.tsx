@@ -7,12 +7,12 @@ type SiteShellProps = {
 };
 
 const navItems = [
-  { href: "/ogloszenia/", label: "Ogłoszenia" },
+  { href: "/ogloszenia/", label: "Ogloszenia" },
   { href: "/biomasa-w-polsce/", label: "Biomasa w Polsce" },
   { href: "/wpisy/", label: "Wpisy" },
-  { href: "/moje-ogloszenia/", label: "Moje ogłoszenia", showWhenLoggedIn: true },
-  { href: "/zaloz-konto/", label: "Załóż konto", hideWhenLoggedIn: true },
-  { href: "/zaloguj-sie/", label: "Zaloguj się", hideWhenLoggedIn: true },
+  { href: "/moje-ogloszenia/", label: "Moje ogloszenia", showWhenLoggedIn: true },
+  { href: "/zaloz-konto/", label: "Zaloz konto", hideWhenLoggedIn: true },
+  { href: "/zaloguj-sie/", label: "Zaloguj sie", hideWhenLoggedIn: true },
 ];
 
 export async function SiteShell({ children }: SiteShellProps) {
@@ -34,7 +34,6 @@ export async function SiteShell({ children }: SiteShellProps) {
       <header className="site-header">
         <div className="site-header__inner">
           <Link href="/" className="site-brand">
-            {/* Logo — serwowane przez rewrite /wp-content/ → wp.biomasaportal.pl */}
             <img
               src="/wp-content/uploads/2024/01/cropped-biomasaportal.png"
               alt="BiomasaPortal"
@@ -44,10 +43,11 @@ export async function SiteShell({ children }: SiteShellProps) {
             />
             <div className="site-brand__text">
               <strong>BiomasaPortal</strong>
+              <span>Next.js migration</span>
             </div>
           </Link>
 
-          <nav className="site-nav" aria-label="Główna nawigacja">
+          <nav className="site-nav" aria-label="Glowna nawigacja">
             {navItems
               .filter((item) => {
                 if (item.hideWhenLoggedIn && userEmail) return false;
@@ -60,7 +60,7 @@ export async function SiteShell({ children }: SiteShellProps) {
                 </Link>
               ))}
             <Link href="/dodaj-ogloszenie/" className="site-nav__cta">
-              Dodaj ogłoszenie
+              Dodaj ogloszenie
             </Link>
             {userEmail ? (
               <form action={signOutAction}>
@@ -77,19 +77,19 @@ export async function SiteShell({ children }: SiteShellProps) {
 
       <footer className="site-footer">
         <div className="site-footer__inner">
-          <span>© {new Date().getFullYear()} Biomasa Portal</span>
+          <span>(c) {new Date().getFullYear()} Biomasa Portal</span>
           <nav className="site-footer__nav" aria-label="Nawigacja stopki">
-            <Link href="/ogloszenia/">Ogłoszenia</Link>
-            <Link href="/dodaj-ogloszenie/">Dodaj ogłoszenie</Link>
-            <Link href="/moje-ogloszenia/">Moje ogłoszenia</Link>
-            <Link href="/zaloguj-sie/">Zaloguj się</Link>
-            <Link href="/zaloz-konto/">Załóż konto</Link>
-            <Link href="/polityka-prywatnosci/">Polityka prywatności</Link>
+            <Link href="/ogloszenia/">Ogloszenia</Link>
+            <Link href="/dodaj-ogloszenie/">Dodaj ogloszenie</Link>
+            <Link href="/moje-ogloszenia/">Moje ogloszenia</Link>
+            <Link href="/zaloguj-sie/">Zaloguj sie</Link>
+            <Link href="/zaloz-konto/">Zaloz konto</Link>
+            <Link href="/polityka-prywatnosci/">Polityka prywatnosci</Link>
             <Link href="/regulamin/">Regulamin</Link>
           </nav>
           <address className="site-footer__contact">
             <a href="tel:+48511430886">+48 511 430 886</a>
-            {" · "}
+            {" | "}
             <a href="mailto:kontakt@biomasaportal.pl">kontakt@biomasaportal.pl</a>
           </address>
         </div>

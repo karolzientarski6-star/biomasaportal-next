@@ -4,10 +4,7 @@ import { EditorialCategoryArchivePage } from "@/components/editorial-category-ar
 import { buildEditorialArchiveMetadata } from "@/lib/editorial";
 import { getBlogIndexByCategory } from "@/lib/blog-index";
 import { getEditorialCategoryBySlug } from "@/lib/editorial-categories";
-import { extractElementorPostsWidgetSignatures } from "@/lib/elementor-posts-widget";
-import { getRouteByPath } from "@/lib/wordpress-export";
 
-const TEMPLATE_PATH = "/wpisy/";
 const POSTS_PER_PAGE = 12;
 
 type EditorialCategoryPageProps = {
@@ -41,27 +38,14 @@ export default async function EditorialCategoryPage({
     notFound();
   }
 
-  const [templateRoute, items] = await Promise.all([
-    getRouteByPath(TEMPLATE_PATH),
-    getBlogIndexByCategory(category.slug),
-  ]);
-
-  if (!templateRoute) {
-    notFound();
-  }
-
-  const mainWidgetSignature =
-    extractElementorPostsWidgetSignatures(templateRoute.html)[0] ?? null;
+  const items = await getBlogIndexByCategory(category.slug);
 
   return (
     <EditorialCategoryArchivePage
-      path={`/biomasa-w-polsce/${category.slug}/`}
-      route={templateRoute}
       category={category}
       items={items}
       currentPage={1}
       perPage={POSTS_PER_PAGE}
-      widgetSignature={mainWidgetSignature}
     />
   );
 }
