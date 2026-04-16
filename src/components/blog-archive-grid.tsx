@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { BlogIndexItem } from "@/lib/blog-index";
 import type { ElementorWidgetSignature } from "@/lib/elementor-posts-widget";
 import type { EditorialCategory } from "@/lib/editorial-categories";
+import { normalizeWpImageUrl } from "@/lib/html-transform";
 
 type BlogArchiveGridProps = {
   items: BlogIndexItem[];
@@ -13,6 +14,7 @@ type BlogArchiveGridProps = {
   category?: EditorialCategory | null;
   widgetSignature?: ElementorWidgetSignature | null;
   showSummary?: boolean;
+  contained?: boolean;
 };
 
 const dayMonthFormatter = new Intl.DateTimeFormat("pl-PL", {
@@ -61,6 +63,7 @@ export function BlogArchiveGrid({
   category = null,
   widgetSignature = null,
   showSummary = true,
+  contained = false,
 }: BlogArchiveGridProps) {
   const pageCount = Math.max(1, Math.ceil(items.length / perPage));
   const pagedItems = paginate(items, currentPage, perPage);
@@ -90,6 +93,7 @@ export function BlogArchiveGrid({
       {...widgetProps}
       className={joinClassNames(
         "blog-archive-grid-root",
+        contained ? "blog-archive-grid-root--contained" : undefined,
         (widgetProps.className as string | undefined) ??
           "elementor-element elementor-widget elementor-widget-posts",
       )}
@@ -135,7 +139,7 @@ export function BlogArchiveGrid({
                     (cardProps.className as string | undefined) ?? "elementor-post__card"
                   }
                 >
-                  {item.image ? (
+                  {normalizeWpImageUrl(item.image) ? (
                     <Link
                       {...thumbnailLinkProps}
                       className={
@@ -154,7 +158,7 @@ export function BlogArchiveGrid({
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={item.image}
+                          src={normalizeWpImageUrl(item.image) ?? ""}
                           alt={item.title}
                           loading="lazy"
                           decoding="async"

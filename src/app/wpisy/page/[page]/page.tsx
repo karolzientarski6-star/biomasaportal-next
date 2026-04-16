@@ -79,6 +79,7 @@ export default async function BlogArchivePaginationPage({
               basePath="/wpisy/"
               widgetSignature={mainWidgetSignature}
               showSummary={false}
+              contained
             />
           ),
         },

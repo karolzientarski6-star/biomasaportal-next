@@ -43,6 +43,7 @@ export default async function BlogArchivePage() {
               basePath="/wpisy/"
               widgetSignature={mainWidgetSignature}
               showSummary={false}
+              contained
             />
           ),
         },
