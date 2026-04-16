@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
-import { MirrorTemplatePage } from "@/components/mirror-template-page";
+import { SiteShell } from "@/components/site-shell";
 import { WordPressDashboardSlot } from "@/components/wordpress-dashboard-slot";
-import { getRouteMetadata } from "@/lib/wordpress-export";
 
-export async function generateMetadata(): Promise<Metadata> {
-  return getRouteMetadata("/moje-ogloszenia/");
-}
+export const metadata: Metadata = {
+  title: "Moje ogłoszenia – BiomasaPortal",
+  description: "Panel zarządzania ogłoszeniami użytkownika BiomasaPortal.",
+  robots: { index: false, follow: false },
+};
 
 export default function MyClassifiedsPage() {
   return (
-    <MirrorTemplatePage
-      path="/moje-ogloszenia/"
-      slots={[
-        {
-          selector: ".elementor-shortcode",
-          slotId: "dashboard-slot",
-          node: <WordPressDashboardSlot />,
-        },
-      ]}
-    />
+    <SiteShell>
+      <div className="custom-page">
+        <section className="page-card">
+          <div className="page-card__body">
+            <WordPressDashboardSlot />
+          </div>
+        </section>
+      </div>
+    </SiteShell>
   );
 }

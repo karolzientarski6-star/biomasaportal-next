@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { signOutAction } from "@/app/actions/auth";
 
 export async function WordPressDashboardSlot() {
   const supabase = await createSupabaseServerClient();
@@ -9,10 +10,12 @@ export async function WordPressDashboardSlot() {
 
   if (!user) {
     return (
-      <p>
-        Musisz być zalogowany, aby zobaczyć panel użytkownika.{" "}
-        <a href="/zaloguj-sie/">Zaloguj się</a>
-      </p>
+      <div className="biomasa-dashboard__guest">
+        <p>Musisz być zalogowany, aby zobaczyć panel użytkownika.</p>
+        <Link href="/zaloguj-sie/" className="primary-button">
+          Zaloguj się
+        </Link>
+      </div>
     );
   }
 
@@ -25,13 +28,20 @@ export async function WordPressDashboardSlot() {
   return (
     <div className="biomasa-dashboard">
       <div className="biomasa-dashboard__topbar">
-        <div>
-          <h2>Moje ogłoszenia</h2>
-          <p>Zalogowano jako {user.email}</p>
+        <div className="biomasa-dashboard__user">
+          <h1>Moje ogłoszenia</h1>
+          <p>Zalogowano jako <strong>{user.email}</strong></p>
         </div>
-        <Link href="/dodaj-ogloszenie/" className="biomasa-dashboard__cta">
-          Dodaj ogłoszenie
-        </Link>
+        <div className="biomasa-dashboard__topbar-actions">
+          <Link href="/dodaj-ogloszenie/" className="primary-button">
+            + Dodaj ogłoszenie
+          </Link>
+          <form action={signOutAction}>
+            <button type="submit" className="secondary-button">
+              Wyloguj się
+            </button>
+          </form>
+        </div>
       </div>
 
       {error ? (
@@ -45,20 +55,29 @@ export async function WordPressDashboardSlot() {
               <div className="biomasa-dashboard-card__body">
                 <h3>{item.title}</h3>
                 <div className="biomasa-dashboard-card__meta">
-                  <span>Status: {item.moderation_status}</span>
-                  <span>Wyświetlenia: {item.views_count}</span>
+                  <span className={`status-pill status-pill--${item.moderation_status}`}>
+                    {item.moderation_status === "approved" ? "✓ Aktywne" :
+                     item.moderation_status === "pending" ? "⏳ Oczekuje" :
+                     item.moderation_status === "rejected" ? "✗ Odrzucone" :
+                     item.moderation_status}
+                  </span>
+                  <span>{item.views_count ?? 0} wyświetleń</span>
                 </div>
               </div>
               <div className="biomasa-dashboard-card__actions">
-                <Link href={`/ogloszenia/${item.slug}/`}>Zobacz</Link>
+                <Link href={`/ogloszenia/${item.slug}/`} className="secondary-button">
+                  Zobacz
+                </Link>
               </div>
             </article>
           ))}
         </div>
       ) : (
         <div className="biomasa-dashboard__empty">
-          Nie masz jeszcze przypisanych ogłoszeń. Dodaj pierwsze ogłoszenie z
-          panelu.
+          <p>Nie masz jeszcze żadnych ogłoszeń.</p>
+          <Link href="/dodaj-ogloszenie/" className="primary-button">
+            Dodaj pierwsze ogłoszenie
+          </Link>
         </div>
       )}
     </div>
