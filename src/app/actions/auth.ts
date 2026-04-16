@@ -123,9 +123,8 @@ export async function signInAction(
 
 export async function signOutAction() {
   const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
-  revalidatePath("/");
-  redirect("/");
+  await supabase.auth.signOut({ scope: "local" });
+  redirect("/zaloguj-sie/");
 }
 
 // ── Password reset ──────────────────────────────────────────────────────────

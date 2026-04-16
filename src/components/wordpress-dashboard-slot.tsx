@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { signOutAction } from "@/app/actions/auth";
 
 export async function WordPressDashboardSlot() {
   const supabase = await createSupabaseServerClient();
@@ -36,11 +35,6 @@ export async function WordPressDashboardSlot() {
           <Link href="/dodaj-ogloszenie/" className="primary-button">
             + Dodaj ogłoszenie
           </Link>
-          <form action={signOutAction}>
-            <button type="submit" className="secondary-button">
-              Wyloguj się
-            </button>
-          </form>
         </div>
       </div>
 

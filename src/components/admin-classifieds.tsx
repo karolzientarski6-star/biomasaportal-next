@@ -129,13 +129,7 @@ export async function AdminClassifieds({ filter = "all" }: { filter?: StatusFilt
                   </form>
                 )}
                 <form action={deleteClassifiedAction.bind(null, item.id)}>
-                  <button
-                    type="submit"
-                    className="admin-btn admin-btn--delete"
-                    onClick={(e) => {
-                      if (!confirm("Na pewno usunąć to ogłoszenie?")) e.preventDefault();
-                    }}
-                  >
+                  <button type="submit" className="admin-btn admin-btn--delete">
                     Usuń
                   </button>
                 </form>
