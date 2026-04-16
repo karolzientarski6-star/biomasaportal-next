@@ -291,6 +291,18 @@ export function transformExportedHtml(html: string) {
     }
   });
 
+  // Inject quick-links strip inside the WP footer
+  $("footer.elementor-location-footer").append(`
+    <div class="biomasa-footer-strip">
+      <a href="/zaloguj-sie/">Zaloguj się</a>
+      <a href="/zaloz-konto/">Załóż konto</a>
+      <a href="/moje-ogloszenia/">Moje ogłoszenia</a>
+      <a href="/dodaj-ogloszenie/">Dodaj ogłoszenie</a>
+      <a href="/polityka-prywatnosci/">Polityka prywatności</a>
+      <a href="/regulamin/">Regulamin</a>
+    </div>
+  `);
+
   const output = $("body").html() ?? $.root().html() ?? html;
   return output.replaceAll("kontakt@maxdigital.pl", "kontakt@biomasaportal.pl");
 }
