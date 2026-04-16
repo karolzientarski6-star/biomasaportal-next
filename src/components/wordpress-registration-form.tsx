@@ -1,7 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, startTransition } from "react";
+import Script from "next/script";
 import { signUpAction } from "@/app/actions/auth";
+import { getRecaptchaToken, RECAPTCHA_SITE_KEY } from "@/lib/recaptcha-client";
 
 type WordPressRegistrationFormProps = {
   origin: string;
@@ -10,10 +12,25 @@ type WordPressRegistrationFormProps = {
 export function WordPressRegistrationForm({
   origin,
 }: WordPressRegistrationFormProps) {
-  const [state, action, pending] = useActionState(signUpAction, {});
+  const [state, formAction, pending] = useActionState(signUpAction, {});
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const token = await getRecaptchaToken("signup");
+    formData.set("recaptcha_token", token);
+    startTransition(() => { formAction(formData); });
+  }
 
   return (
-    <form id="biomasa-registration-form" action={action}>
+    <>
+    {RECAPTCHA_SITE_KEY && (
+      <Script
+        src={`https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`}
+        strategy="lazyOnload"
+      />
+    )}
+    <form id="biomasa-registration-form" onSubmit={handleSubmit}>
       <input type="hidden" name="origin" value={origin} />
 
       <div className="form-section">
@@ -102,5 +119,6 @@ export function WordPressRegistrationForm({
         </p>
       </div>
     </form>
+    </>
   );
 }

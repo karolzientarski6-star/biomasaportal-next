@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { verifyRecaptcha } from "@/lib/recaptcha";
 
 const signUpSchema = z
   .object({
@@ -31,6 +32,14 @@ export async function signUpAction(
   _prevState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  const recaptcha = await verifyRecaptcha(
+    formData.get("recaptcha_token")?.toString(),
+    "signup",
+  );
+  if (!recaptcha.ok) {
+    return { error: recaptcha.error };
+  }
+
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -76,6 +85,14 @@ export async function signInAction(
   _prevState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  const recaptcha = await verifyRecaptcha(
+    formData.get("recaptcha_token")?.toString(),
+    "login",
+  );
+  if (!recaptcha.ok) {
+    return { error: recaptcha.error };
+  }
+
   const parsed = signInSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
