@@ -58,6 +58,9 @@ export async function SiteShell({ children }: SiteShellProps) {
                   {item.label}
                 </Link>
               ))}
+            <Link href="/dodaj-ogloszenie/" className="site-nav__cta">
+              Dodaj ogłoszenie
+            </Link>
             {userEmail ? (
               <>
                 <span className="site-nav__user">{userEmail}</span>
@@ -79,6 +82,10 @@ export async function SiteShell({ children }: SiteShellProps) {
           <span>© {new Date().getFullYear()} Biomasa Portal</span>
           <nav className="site-footer__nav" aria-label="Nawigacja stopki">
             <Link href="/ogloszenia/">Ogłoszenia</Link>
+            <Link href="/dodaj-ogloszenie/">Dodaj ogłoszenie</Link>
+            <Link href="/moje-ogloszenia/">Moje ogłoszenia</Link>
+            <Link href="/zaloguj-sie/">Zaloguj się</Link>
+            <Link href="/zaloz-konto/">Załóż konto</Link>
             <Link href="/polityka-prywatnosci/">Polityka prywatności</Link>
             <Link href="/regulamin/">Regulamin</Link>
           </nav>

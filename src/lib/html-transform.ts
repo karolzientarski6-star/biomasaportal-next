@@ -3,8 +3,6 @@ import { EDITORIAL_CATEGORIES } from "@/lib/editorial-categories";
 
 const ABSOLUTE_SITE_URL = "https://biomasaportal.pl";
 const PERSISTENT_HIDDEN_BUTTON_LABELS = new Set([
-  "Dodaj ogloszenie",
-  "Dodaj ogłoszenie",
   "Zaloz konto",
   "Załóż konto",
 ]);

@@ -138,6 +138,28 @@ img {
   font-weight: 600;
 }
 
+.site-shell .site-nav .site-nav__cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 5px;
+  background-color: #F3A814;
+  border: 2px solid #F3A814;
+  color: #fff !important;
+  font-family: "Raleway", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.site-shell .site-nav .site-nav__cta:hover {
+  background-color: #e09610;
+  border-color: #e09610;
+}
+
 .site-shell .site-main {
   padding: 32px 0 72px;
 }
@@ -1711,8 +1733,9 @@ img {
   .mirror-html .elementor-nav-menu--main .biomasa-mega-menu > .biomasa-mega-menu__panel {
     display: none !important;
     position: absolute !important;
-    top: calc(100% + 15px);
-    left: 50%;
+    top: calc(100% + 15px) !important;
+    left: 50% !important;
+    inset-inline-start: 50% !important;
     z-index: 50;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 10px;
@@ -1722,7 +1745,7 @@ img {
     border-radius: 0 0 24px 24px;
     background: rgba(255, 255, 255, 0.98);
     box-shadow: 0 30px 50px rgba(23, 49, 38, 0.14);
-    transform: translateX(-50%);
+    transform: translateX(-50%) !important;
   }
 
   .mirror-html .elementor-nav-menu--main .biomasa-mega-menu:hover > .biomasa-mega-menu__panel,
