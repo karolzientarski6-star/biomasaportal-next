@@ -339,8 +339,32 @@ export function injectHtmlSlots(html: string, slots: HtmlSlot[]) {
 
     target.replaceWith(`<div data-next-slot="${slot.slotId}"></div>`);
 
-    // Remove any remaining matches of the same selector (stale WP content not replaced by a slot)
-    $(slot.selector).remove();
+    // Remove remaining stale matches of the same selector. For each stale element we walk up
+    // to find the shared ancestor with the slot marker and remove the sibling branch that
+    // contains the stale element — this avoids leaving empty parent containers on the page.
+    const marker = $(`[data-next-slot="${slot.slotId}"]`).get(0);
+    $(slot.selector).each((_, staleEl) => {
+      if (marker) {
+        let ancestor = $(staleEl).parent();
+        while (ancestor.length) {
+          if ($.contains(ancestor.get(0)!, marker)) {
+            // Found the shared ancestor — remove its child that contains staleEl but not the marker
+            let removed = false;
+            ancestor.children().each((_, child) => {
+              if (!removed && !$.contains(child, marker) && child !== marker && $.contains(child, staleEl)) {
+                $(child).remove();
+                removed = true;
+              }
+            });
+            if (!removed) $(staleEl).remove();
+            return;
+          }
+          ancestor = ancestor.parent();
+        }
+      }
+      // Fallback: marker not found or no shared ancestor — remove widget itself
+      $(staleEl).remove();
+    });
   }
 
   return $("body").html() ?? $.root().html() ?? html;
