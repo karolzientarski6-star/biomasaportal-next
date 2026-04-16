@@ -173,34 +173,30 @@ img {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  align-items: center;
   gap: 12px 24px;
   padding: 24px 0 40px;
   color: var(--muted);
   font-size: 14px;
 }
 
-/* ── WP mirror footer quick-links strip ─────────────────────────── */
-.biomasa-footer-strip {
+.site-shell .site-footer__nav {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 24px;
-  padding: 16px 24px;
-  background: rgba(0, 0, 0, 0.25);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 6px 20px;
 }
 
-.biomasa-footer-strip a {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 13px;
-  font-weight: 500;
+.site-shell .site-footer__nav a {
+  color: var(--muted);
   text-decoration: none;
-  transition: color 0.2s;
+  font-size: 13px;
+  transition: color 0.15s;
 }
 
-.biomasa-footer-strip a:hover {
-  color: #F3A814;
+.site-shell .site-footer__nav a:hover {
+  color: var(--brand);
 }
+
 
 .mirror-page,
 .custom-page {

@@ -1,10 +1,17 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { SiteShell } from "./site-shell";
 import { SignInForm } from "./auth-forms";
-import { isSupabaseConfigured } from "@/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export function SignInPage() {
-  const supabaseReady = isSupabaseConfigured();
+export async function SignInPage() {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim());
+    redirect(adminEmails.includes(user.email ?? "") ? "/panel-admina/" : "/moje-ogloszenia/");
+  }
 
   return (
     <SiteShell>
@@ -16,14 +23,6 @@ export function SignInPage() {
             <p>Panel logowania do kont użytkowników i zarządzania ogłoszeniami.</p>
           </div>
           <div className="page-card__body">
-            <div className={supabaseReady ? "status-banner" : "status-banner warn"}>
-              {supabaseReady ? (
-                <span>Logowanie jest podpięte pod Supabase Auth.</span>
-              ) : (
-                <span>Brakuje konfiguracji Supabase, więc logowanie nie zadziała.</span>
-              )}
-            </div>
-
             <div className="form-panel">
               <SignInForm />
               <div className="button-row" style={{ marginTop: 16 }}>

@@ -10,9 +10,8 @@ const navItems = [
   { href: "/ogloszenia/", label: "Ogłoszenia" },
   { href: "/biomasa-w-polsce/", label: "Biomasa w Polsce" },
   { href: "/wpisy/", label: "Wpisy" },
-  { href: "/dodaj-ogloszenie/", label: "Dodaj ogłoszenie" },
-  { href: "/moje-ogloszenia/", label: "Moje ogłoszenia" },
-  { href: "/zaloz-konto/", label: "Załóż konto", hideWhenLoggedIn: false },
+  { href: "/moje-ogloszenia/", label: "Moje ogłoszenia", showWhenLoggedIn: true },
+  { href: "/zaloz-konto/", label: "Załóż konto", hideWhenLoggedIn: true },
   { href: "/zaloguj-sie/", label: "Zaloguj się", hideWhenLoggedIn: true },
 ];
 
@@ -50,9 +49,11 @@ export async function SiteShell({ children }: SiteShellProps) {
 
           <nav className="site-nav" aria-label="Główna nawigacja">
             {navItems
-              .filter((item) =>
-                item.hideWhenLoggedIn ? !userEmail : true,
-              )
+              .filter((item) => {
+                if (item.hideWhenLoggedIn && userEmail) return false;
+                if (item.showWhenLoggedIn && !userEmail) return false;
+                return true;
+              })
               .map((item) => (
                 <Link key={item.href} href={item.href}>
                   {item.label}
@@ -62,14 +63,11 @@ export async function SiteShell({ children }: SiteShellProps) {
               Dodaj ogłoszenie
             </Link>
             {userEmail ? (
-              <>
-                <span className="site-nav__user">{userEmail}</span>
-                <form action={signOutAction}>
-                  <button type="submit" className="secondary-button">
-                    Wyloguj
-                  </button>
-                </form>
-              </>
+              <form action={signOutAction}>
+                <button type="submit" className="secondary-button">
+                  Wyloguj
+                </button>
+              </form>
             ) : null}
           </nav>
         </div>

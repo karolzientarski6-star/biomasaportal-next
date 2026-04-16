@@ -291,16 +291,13 @@ export function transformExportedHtml(html: string) {
     }
   });
 
-  // Inject quick-links strip inside the WP footer
-  $("footer.elementor-location-footer").append(`
-    <div class="biomasa-footer-strip">
-      <a href="/zaloguj-sie/">Zaloguj się</a>
-      <a href="/zaloz-konto/">Załóż konto</a>
-      <a href="/moje-ogloszenia/">Moje ogłoszenia</a>
-      <a href="/dodaj-ogloszenie/">Dodaj ogłoszenie</a>
-      <a href="/polityka-prywatnosci/">Polityka prywatności</a>
-      <a href="/regulamin/">Regulamin</a>
-    </div>
+  // Add login/dashboard links to the existing "Skróty" icon list in WP footer
+  $(".elementor-element-89b2695 .elementor-icon-list-items").append(`
+    <li class="elementor-icon-list-item"><a href="/zaloguj-sie/"><span class="elementor-icon-list-text">Zaloguj się</span></a></li>
+    <li class="elementor-icon-list-item"><a href="/zaloz-konto/"><span class="elementor-icon-list-text">Załóż konto</span></a></li>
+    <li class="elementor-icon-list-item"><a href="/moje-ogloszenia/"><span class="elementor-icon-list-text">Moje ogłoszenia</span></a></li>
+    <li class="elementor-icon-list-item"><a href="/dodaj-ogloszenie/"><span class="elementor-icon-list-text">Dodaj ogłoszenie</span></a></li>
+    <li class="elementor-icon-list-item"><a href="/regulamin/"><span class="elementor-icon-list-text">Regulamin</span></a></li>
   `);
 
   const output = $("body").html() ?? $.root().html() ?? html;

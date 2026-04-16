@@ -6,6 +6,6 @@ export const metadata: Metadata = {
   description: "Zaloguj się do panelu użytkownika BiomasaPortal.",
 };
 
-export default function LoginPage() {
+export default async function LoginPage() {
   return <SignInPage />;
 }

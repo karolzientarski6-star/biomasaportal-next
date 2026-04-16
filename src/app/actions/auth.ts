@@ -116,7 +116,9 @@ export async function signInAction(
   }
 
   revalidatePath("/");
-  redirect("/moje-ogloszenia/");
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim());
+  const isAdmin = adminEmails.includes(parsed.data.email);
+  redirect(isAdmin ? "/panel-admina/" : "/moje-ogloszenia/");
 }
 
 export async function signOutAction() {
