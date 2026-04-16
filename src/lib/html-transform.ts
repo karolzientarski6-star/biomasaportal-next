@@ -132,10 +132,6 @@ export function transformExportedHtml(html: string) {
 
   replaceMachinesMenu($);
 
-  // Remove stale WP posts widgets not replaced by Next.js slots (e.g. "Pozostałe wpisy" on /wpisy/)
-  // NOTE: both widgets may share the same parent container, so we only remove the widget
-  // element itself — never the parent — to avoid also killing the slot marker.
-  $(".elementor-widget-posts").remove();
 
   $("[class]").each((_, element) => {
     const className = $(element).attr("class");
@@ -342,6 +338,9 @@ export function injectHtmlSlots(html: string, slots: HtmlSlot[]) {
     }
 
     target.replaceWith(`<div data-next-slot="${slot.slotId}"></div>`);
+
+    // Remove any remaining matches of the same selector (stale WP content not replaced by a slot)
+    $(slot.selector).remove();
   }
 
   return $("body").html() ?? $.root().html() ?? html;
