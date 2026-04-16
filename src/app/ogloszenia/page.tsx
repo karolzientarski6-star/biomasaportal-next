@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { ClassifiedArchive } from "@/components/classified-archive";
-import { buildRouteMetadata, getRouteByPath } from "@/lib/wordpress-export";
+import { MirrorPage } from "@/components/mirror-page";
+import { getRouteMetadata } from "@/lib/wordpress-export";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const route = await getRouteByPath("/ogloszenia/");
-  return route ? buildRouteMetadata(route) : {};
+  return getRouteMetadata("/ogloszenia/");
 }
 
 export default function ClassifiedArchivePage() {
-  return <ClassifiedArchive />;
+  return <MirrorPage path="/ogloszenia/" />;
 }
