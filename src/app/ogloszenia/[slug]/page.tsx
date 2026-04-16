@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { MirrorPage } from "@/components/mirror-page";
+import { NativeClassifiedPage } from "@/components/native-classified-page";
 import { buildRouteMetadata, getRouteByPath } from "@/lib/wordpress-export";
 
 type ClassifiedSingleProps = {
@@ -30,5 +30,5 @@ export default async function ClassifiedSinglePage({
     notFound();
   }
 
-  return <MirrorPage path={route.path} route={route} />;
+  return <NativeClassifiedPage route={route} slug={slug} />;
 }
