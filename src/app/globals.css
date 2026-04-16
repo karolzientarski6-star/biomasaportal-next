@@ -2185,3 +2185,184 @@ img {
   color: #b42318;
   border: 1px solid #f5c0bc;
 }
+
+/* ── Admin section nav ───────────────────────────────────────────── */
+.admin-section-nav {
+  display: flex;
+  gap: 4px;
+  padding: 0 0 0 24px;
+  border-bottom: 1px solid rgba(214, 216, 202, 0.6);
+  margin-bottom: 0;
+}
+
+.admin-section-tab {
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.admin-section-tab:hover {
+  color: var(--brand);
+}
+
+.admin-section-tab--active {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+
+/* ── Admin classifieds list ──────────────────────────────────────── */
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.admin-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(214, 216, 202, 0.8);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.admin-tab:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.admin-tab--active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.admin-tab--active .admin-tab__count {
+  background: rgba(255,255,255,0.25);
+}
+
+.admin-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: rgba(0,0,0,0.08);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-listings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-listing-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(214, 216, 202, 0.6);
+  background: #fff;
+}
+
+.admin-listing-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.admin-listing-row__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.admin-listing-row__title a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.admin-listing-row__title a:hover {
+  color: var(--brand);
+  text-decoration: underline;
+}
+
+.admin-listing-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.admin-listing-row__actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+  align-items: center;
+}
+
+.admin-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.admin-btn--approve {
+  background: #edf5f0;
+  border-color: #b3d4be;
+  color: #2d5c3f;
+}
+
+.admin-btn--approve:hover {
+  background: #2d5c3f;
+  border-color: #2d5c3f;
+  color: #fff;
+}
+
+.admin-btn--reject {
+  background: #fff8ec;
+  border-color: #f0d08a;
+  color: #7a5000;
+}
+
+.admin-btn--reject:hover {
+  background: #c77700;
+  border-color: #c77700;
+  color: #fff;
+}
+
+.admin-btn--delete {
+  background: #fff1f0;
+  border-color: #f5c0bc;
+  color: #b42318;
+}
+
+.admin-btn--delete:hover {
+  background: #b42318;
+  border-color: #b42318;
+  color: #fff;
+}
