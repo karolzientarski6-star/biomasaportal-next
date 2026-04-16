@@ -4,6 +4,7 @@ import { EditorialCategoryArchivePage } from "@/components/editorial-category-ar
 import { buildEditorialArchiveMetadata } from "@/lib/editorial";
 import { getBlogIndexByCategory } from "@/lib/blog-index";
 import { getEditorialCategoryBySlug } from "@/lib/editorial-categories";
+import { extractElementorPostsWidgetSignatures } from "@/lib/elementor-posts-widget";
 import { getRouteByPath } from "@/lib/wordpress-export";
 
 const TEMPLATE_PATH = "/wpisy/";
@@ -61,6 +62,9 @@ export default async function EditorialCategoryPaginationPage({
     notFound();
   }
 
+  const mainWidgetSignature =
+    extractElementorPostsWidgetSignatures(templateRoute.html)[0] ?? null;
+
   return (
     <EditorialCategoryArchivePage
       path={`/biomasa-w-polsce/${category.slug}/page/${page}/`}
@@ -69,6 +73,7 @@ export default async function EditorialCategoryPaginationPage({
       items={items}
       currentPage={page}
       perPage={POSTS_PER_PAGE}
+      widgetSignature={mainWidgetSignature}
     />
   );
 }
