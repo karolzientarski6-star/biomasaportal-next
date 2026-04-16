@@ -132,6 +132,16 @@ export function transformExportedHtml(html: string) {
 
   replaceMachinesMenu($);
 
+  // Remove stale WP posts widgets not replaced by Next.js slots (e.g. "Pozostałe wpisy" on /wpisy/)
+  $(".elementor-widget-posts").each((_, el) => {
+    const parent = $(el).closest("section.elementor-section, .e-con.e-parent");
+    if (parent.length) {
+      parent.remove();
+    } else {
+      $(el).remove();
+    }
+  });
+
   $("[class]").each((_, element) => {
     const className = $(element).attr("class");
 
