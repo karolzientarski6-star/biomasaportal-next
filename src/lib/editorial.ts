@@ -179,6 +179,10 @@ export function sanitizeEditorialHtml(html: string) {
   const $ = load(html || "");
   $("script").remove();
 
+  // The AI-generated HTML starts with an <h1> that duplicates the article title
+  // shown separately in the page template — remove it to avoid rendering it twice.
+  $("h1").first().remove();
+
   $("img").each((index, element) => {
     const image = $(element);
     image.attr("decoding", "async");

@@ -1,22 +1,25 @@
 import type { CSSProperties } from "react";
-import Link from "next/link";
+import { load } from "cheerio";
 import { notFound } from "next/navigation";
-import { normalizeWpImageUrl } from "@/lib/html-transform";
 import {
   getEditorialArticleByPath,
-  getEditorialCategoryForArticle,
   getEditorialFaqEntries,
   renderFaqAnswerHtml,
   type EditorialArticle,
 } from "@/lib/editorial";
-import { getCombinedBlogIndex } from "@/lib/blog-index";
-import { SiteShell } from "@/components/site-shell";
+import { transformExportedHtml } from "@/lib/html-transform";
+import { getRouteByPath } from "@/lib/wordpress-export";
+import { WordPressAssets } from "@/components/wordpress-assets";
+import { WordPressBodyClass } from "@/components/wordpress-body-class";
 import { WordPressInteractiveEnhancer } from "@/components/wordpress-interactive-enhancer";
 import { WordPressSeoScripts } from "@/components/wordpress-seo-scripts";
 
-function buildArticleSchema(article: EditorialArticle) {
-  const category = getEditorialCategoryForArticle(article);
+// A published WP single-post route used as the HTML shell for editorial articles.
+// Its stylesheets and Elementor structure give editorial posts the same visual
+// appearance as regular WordPress posts.
+const WP_SINGLE_POST_TEMPLATE_PATH = "/cena-zrebki-drzewnej-2026/";
 
+function buildArticleSchema(article: EditorialArticle) {
   return JSON.stringify({
     "@context": "https://schema.org",
     "@type": "Article",
@@ -25,10 +28,7 @@ function buildArticleSchema(article: EditorialArticle) {
     image: article.heroImage ? [article.heroImage] : undefined,
     datePublished: article.publishedAt ?? article.scheduledFor ?? new Date().toISOString(),
     dateModified: article.publishedAt ?? article.scheduledFor ?? new Date().toISOString(),
-    author: {
-      "@type": "Organization",
-      name: "BiomasaPortal",
-    },
+    author: { "@type": "Organization", name: "BiomasaPortal" },
     publisher: {
       "@type": "Organization",
       name: "BiomasaPortal",
@@ -38,167 +38,81 @@ function buildArticleSchema(article: EditorialArticle) {
       },
     },
     mainEntityOfPage: `https://biomasaportal.pl${article.path}`,
-    articleSection: category?.name ?? article.categoryName,
+    articleSection: article.categoryName,
   });
 }
 
-function selectRelatedItems(
-  article: EditorialArticle,
-  relatedIndex: Awaited<ReturnType<typeof getCombinedBlogIndex>>,
-  limit = 3,
-) {
-  const candidates = relatedIndex.filter((item) => item.path !== article.path);
-  const sameCategory = candidates.filter(
-    (item) => item.categorySlug === article.categorySlug,
-  );
-  const fallback = candidates.filter(
-    (item) => item.categorySlug !== article.categorySlug,
-  );
+function buildFaqHtml(article: EditorialArticle) {
+  const entries = getEditorialFaqEntries(article.faqSchema);
+  if (!entries.length) return "";
 
-  return [...sameCategory, ...fallback].slice(0, limit);
+  const items = entries
+    .map(
+      (entry) =>
+        `<div class="faq-item"><div class="faq-question">${entry.question}</div><div class="faq-answer">${renderFaqAnswerHtml(entry.answerHtml)}</div></div>`,
+    )
+    .join("");
+
+  return `<section class="faq-section elementor-element elementor-widget"><div class="elementor-widget-container"><h2>Najczęściej zadawane pytania</h2><div class="faq-list">${items}</div></div></section>`;
 }
 
-function EditorialArticleContent({
-  article,
-  relatedItems,
-}: {
-  article: EditorialArticle;
-  relatedItems: Awaited<ReturnType<typeof getCombinedBlogIndex>>;
-}) {
-  const category = getEditorialCategoryForArticle(article);
-  const faqEntries = getEditorialFaqEntries(article.faqSchema);
+/**
+ * Takes a WP single-post HTML export and injects editorial article content into
+ * the appropriate Elementor slots, so the editorial post inherits the full WP
+ * visual template (CSS, sidebar TOC, hero section, etc.).
+ */
+function injectEditorialIntoWpTemplate(
+  templateHtml: string,
+  article: EditorialArticle,
+): string {
+  const $ = load(templateHtml);
 
-  return (
-    <div className="mirror-html editorial-article-content">
-      <div
-        data-elementor-type="wp-post"
-        data-elementor-post-type="post"
-        className="elementor elementor-location-single editorial-single-post"
-      >
-        <div className="elementor-element e-flex e-con-boxed e-con e-parent editorial-post-hero">
-          <div className="e-con-inner">
-            <div className="elementor-element elementor-widget elementor-widget-theme-post-title">
-              <div className="elementor-widget-container">
-                <h1 className="elementor-heading-title">{article.title}</h1>
-              </div>
-            </div>
-            <div className="editorial-post-meta">
-              <span>{category?.name ?? article.categoryName}</span>
-              <span>
-                {new Intl.DateTimeFormat("pl-PL", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                }).format(new Date(article.publishedAt ?? article.scheduledFor ?? Date.now()))}
-              </span>
-            </div>
-          </div>
-        </div>
+  // 1. Replace the title in the first heading widget.
+  const titleEl = $(".elementor-widget-heading .elementor-heading-title").first();
+  if (titleEl.length) {
+    titleEl.text(article.title);
+  }
 
-        <div className="elementor-element e-flex e-con-boxed e-con e-parent editorial-post-layout">
-          <div className="e-con-inner">
-            <aside
-              className="elementor-element elementor-widget elementor-widget-table-of-contents"
-              data-settings='{"headings_by_tags":["h2"]}'
-            >
-              <div className="elementor-toc__header">
-                <h3 className="elementor-toc__header-title">Spis tresci</h3>
-              </div>
-              <div className="elementor-toc__body" />
-              {relatedItems.length > 0 ? (
-                <div className="editorial-sidebar-posts">
-                  <h3>Pozostale wpisy</h3>
-                  <div className="elementor-posts-container elementor-posts elementor-posts--skin-cards elementor-grid">
-                    {relatedItems.map((item) => (
-                      <article
-                        key={item.id}
-                        className="elementor-post elementor-grid-item post type-post status-publish format-standard has-post-thumbnail hentry category-oze"
-                      >
-                        <div className="elementor-post__card">
-                          {item.image ? (
-                            <Link
-                              className="elementor-post__thumbnail__link"
-                              href={item.path}
-                              tabIndex={-1}
-                            >
-                              <div className="elementor-post__thumbnail">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={normalizeWpImageUrl(item.image) ?? ""} alt={item.title} loading="lazy" />
-                              </div>
-                            </Link>
-                          ) : null}
-                          <div className="elementor-post__text">
-                            <h3 className="elementor-post__title">
-                              <Link href={item.path}>{item.title}</Link>
-                            </h3>
-                            <div className="elementor-post__excerpt">
-                              <p>{item.excerpt}</p>
-                            </div>
-                            <div className="elementor-post__read-more-wrapper">
-                              <Link className="elementor-post__read-more" href={item.path}>
-                                Czytaj wiecej »
-                              </Link>
-                            </div>
-                          </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </aside>
+  // 2. Replace the main text-editor content with the editorial HTML + FAQ.
+  //    The WP template has two text-editor widgets in the content section;
+  //    we fill the first with article content and remove the second.
+  const faqHtml = buildFaqHtml(article);
+  const contentHtml = article.htmlContent + faqHtml;
 
-            <div className="editorial-post-main">
-              <div className="elementor-element elementor-widget elementor-widget-text-editor">
-                <div
-                  className="elementor-widget-container"
-                  dangerouslySetInnerHTML={{ __html: article.htmlContent }}
-                />
-              </div>
+  const textEditors = $(".elementor-widget-text-editor").filter((_, el) => {
+    // Exclude footer copyright text editor
+    const text = $(el).text().trim();
+    return !text.includes("Max Digital") && text.length > 20;
+  });
 
-              {faqEntries.length > 0 ? (
-                <section className="elementor-element elementor-widget faq-section">
-                  <div className="elementor-widget-container">
-                    <h2>Najczesciej zadawane pytania</h2>
-                    <div className="faq-list">
-                      {faqEntries.map((entry) => (
-                        <article key={entry.question} className="faq-item">
-                          <div className="faq-question">{entry.question}</div>
-                          <div
-                            className="faq-answer"
-                            dangerouslySetInnerHTML={{
-                              __html: renderFaqAnswerHtml(entry.answerHtml),
-                            }}
-                          />
-                        </article>
-                      ))}
-                    </div>
-                  </div>
-                </section>
-              ) : null}
+  textEditors.first().find(".elementor-widget-container").html(contentHtml);
+  textEditors.slice(1).remove();
 
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return $("body").html() ?? templateHtml;
 }
 
 export async function EditorialArticlePage({ path }: { path: string }) {
-  const [article, relatedIndex] = await Promise.all([
+  const [article, templateRoute] = await Promise.all([
     getEditorialArticleByPath(path),
-    getCombinedBlogIndex(),
+    getRouteByPath(WP_SINGLE_POST_TEMPLATE_PATH),
   ]);
 
   if (!article || article.publicationStatus !== "published") {
     notFound();
   }
 
-  const relatedItems = selectRelatedItems(article, relatedIndex);
+  const rawTemplateHtml = templateRoute?.html ?? "";
+  const injectedHtml = templateRoute
+    ? injectEditorialIntoWpTemplate(rawTemplateHtml, article)
+    : "";
+  const finalHtml = transformExportedHtml(injectedHtml);
+
+  const bodyClass = templateRoute?.bodyClass ?? "single single-post";
 
   return (
     <>
+      <WordPressBodyClass className={bodyClass} />
+      {templateRoute && <WordPressAssets stylesheets={templateRoute.stylesheets} />}
       <WordPressSeoScripts
         schemaJsonLd={[
           buildArticleSchema(article),
@@ -210,20 +124,21 @@ export async function EditorialArticlePage({ path }: { path: string }) {
         featuredImage={article.heroImage}
         isSinglePost
       />
-      <SiteShell>
+      <div
+        className="wp-mirror-page wp-mirror-page--single-post"
+        style={
+          article.heroImage
+            ? ({
+                ["--wp-featured-image" as string]: `url("${article.heroImage}")`,
+              } as CSSProperties)
+            : undefined
+        }
+      >
         <div
-          className="wp-mirror-page wp-mirror-page--single-post"
-          style={
-            article.heroImage
-              ? ({
-                  ["--wp-featured-image" as string]: `url("${article.heroImage}")`,
-                } as CSSProperties)
-              : undefined
-          }
-        >
-          <EditorialArticleContent article={article} relatedItems={relatedItems} />
-        </div>
-      </SiteShell>
+          className="mirror-html"
+          dangerouslySetInnerHTML={{ __html: finalHtml }}
+        />
+      </div>
     </>
   );
 }
