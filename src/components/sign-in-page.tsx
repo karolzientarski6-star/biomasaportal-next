@@ -30,6 +30,9 @@ export function SignInPage() {
                 <Link href="/zaloz-konto/" className="secondary-button">
                   Załóż konto
                 </Link>
+                <Link href="/zapomniales-hasla/" className="secondary-button">
+                  Zapomniałeś hasła?
+                </Link>
               </div>
             </div>
           </div>

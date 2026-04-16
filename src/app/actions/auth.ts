@@ -125,3 +125,77 @@ export async function signOutAction() {
   revalidatePath("/");
   redirect("/");
 }
+
+// ── Password reset ──────────────────────────────────────────────────────────
+
+const forgotPasswordSchema = z.object({
+  email: z.email("Podaj poprawny adres email."),
+});
+
+export async function forgotPasswordAction(
+  _prevState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const parsed = forgotPasswordSchema.safeParse({
+    email: formData.get("email"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Nieprawidłowy email." };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const siteUrl = "https://www.biomasaportal.pl";
+
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    parsed.data.email,
+    {
+      redirectTo: `${siteUrl}/auth/confirm?type=recovery&next=/nowe-haslo/`,
+    },
+  );
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return {
+    success:
+      "Link do resetowania hasła został wysłany na podany adres email. Sprawdź skrzynkę.",
+  };
+}
+
+const newPasswordSchema = z
+  .object({
+    password: z.string().min(8, "Hasło musi mieć minimum 8 znaków."),
+    passwordConfirm: z.string().min(8, "Powtórz hasło."),
+  })
+  .refine((d) => d.password === d.passwordConfirm, {
+    message: "Hasła muszą być identyczne.",
+    path: ["passwordConfirm"],
+  });
+
+export async function updatePasswordAction(
+  _prevState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const parsed = newPasswordSchema.safeParse({
+    password: formData.get("password"),
+    passwordConfirm:
+      formData.get("passwordConfirm") ?? formData.get("password_confirm"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Błąd walidacji." };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  redirect("/moje-ogloszenia/");
+}
