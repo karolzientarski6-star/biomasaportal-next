@@ -47,6 +47,10 @@ function toReactAttributes(attributes?: Record<string, string>) {
   );
 }
 
+function joinClassNames(...values: Array<string | undefined>) {
+  return values.filter(Boolean).join(" ");
+}
+
 export function BlogArchiveGrid({
   items,
   title = "Wpisy",
@@ -84,10 +88,11 @@ export function BlogArchiveGrid({
   return (
     <div
       {...widgetProps}
-      className={
+      className={joinClassNames(
+        "blog-archive-grid-root",
         (widgetProps.className as string | undefined) ??
-        "elementor-element elementor-widget elementor-widget-posts"
-      }
+          "elementor-element elementor-widget elementor-widget-posts",
+      )}
     >
       <div
         {...widgetContainerProps}
@@ -197,28 +202,29 @@ export function BlogArchiveGrid({
                         "elementor-post__read-more"
                       }
                       href={item.path}
-                      aria-label={`Czytaj wiecej o ${item.title}`}
+                      aria-label={`Czytaj więcej o ${item.title}`}
                       tabIndex={-1}
                     >
-                      Czytaj wiecej &gt;
+                      Czytaj więcej &gt;
                     </Link>
-                    <div
-                      {...metaProps}
+                  </div>
+                  {/* meta-data is a sibling of elementor-post__text in WP, NOT nested inside it */}
+                  <div
+                    {...metaProps}
+                    className={
+                      (metaProps.className as string | undefined) ??
+                      "elementor-post__meta-data"
+                    }
+                  >
+                    <span
+                      {...dateProps}
                       className={
-                        (metaProps.className as string | undefined) ??
-                        "elementor-post__meta-data"
+                        (dateProps.className as string | undefined) ??
+                        "elementor-post-date"
                       }
                     >
-                      <span
-                        {...dateProps}
-                        className={
-                          (dateProps.className as string | undefined) ??
-                          "elementor-post-date"
-                        }
-                      >
-                        {formatWpDate(item.lastModified)}
-                      </span>
-                    </div>
+                      {formatWpDate(item.lastModified)}
+                    </span>
                   </div>
                 </div>
               </article>
