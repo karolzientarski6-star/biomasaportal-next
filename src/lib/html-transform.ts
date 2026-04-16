@@ -81,6 +81,16 @@ function rewriteSrcSet(value: string) {
     .join(", ");
 }
 
+function rewriteProductCategoryPath(path: string) {
+  const match = path.match(/^\/product-category\/(.+)/);
+  if (!match) {
+    return path;
+  }
+
+  const rest = match[1].endsWith("/") ? match[1] : `${match[1]}/`;
+  return `/biomasa-w-polsce/${rest}`;
+}
+
 function buildMegaMenuHtml(parentLinkClass: string, childLinkClass: string, tabIndex?: string) {
   const tabIndexAttribute = tabIndex ? ` tabindex="${escapeHtml(tabIndex)}"` : "";
   const tiles = EDITORIAL_CATEGORIES.map(
@@ -208,7 +218,8 @@ export function transformExportedHtml(html: string) {
         return;
       }
 
-      $(element).attr("href", toRelativeSiteUrl(normalized));
+      const relativePath = toRelativeSiteUrl(normalized);
+      $(element).attr("href", rewriteProductCategoryPath(relativePath));
       return;
     }
 
@@ -222,7 +233,7 @@ export function transformExportedHtml(html: string) {
       return;
     }
 
-    $(element).attr("href", normalized);
+    $(element).attr("href", rewriteProductCategoryPath(normalized));
   });
 
   $("form[action]").each((_, element) => {
