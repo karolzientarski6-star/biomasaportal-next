@@ -91,6 +91,32 @@ function replaceTemplateBreadcrumb(articleRoot: Cheerio<any>, title: string) {
   }
 }
 
+function sanitizeEditorialContent(html: string) {
+  const $ = load(html);
+
+  $(".faq-container, .faq-section").remove();
+  $(".faq-item").each((_, element) => {
+    const question = $(element).find(".faq-question").first();
+    const answer = $(element).find(".faq-answer").first();
+
+    if (question.length && answer.length) {
+      $(element).remove();
+    }
+  });
+
+  $("[onclick*='toggleFAQ']").removeAttr("onclick");
+
+  $("script").each((_, element) => {
+    const scriptContent = $(element).html() ?? "";
+
+    if (/toggleFAQ/i.test(scriptContent)) {
+      $(element).remove();
+    }
+  });
+
+  return $.root().html() ?? html;
+}
+
 function injectEditorialIntoWpTemplate(
   templateHtml: string,
   article: EditorialArticle,
@@ -105,7 +131,8 @@ function injectEditorialIntoWpTemplate(
   const introHtml = article.metaDescription
     ? `<p>${article.metaDescription}</p>`
     : "";
-  const contentHtml = `${article.htmlContent}${faqHtml}`;
+  const sanitizedContentHtml = sanitizeEditorialContent(article.htmlContent);
+  const contentHtml = `${sanitizedContentHtml}${faqHtml}`;
 
   const textEditors = articleRoot.find(".elementor-widget-text-editor").filter((_, el) => {
     const text = $(el).text().trim();

@@ -3,12 +3,20 @@ type WordPressAssetsProps = {
 };
 
 export function WordPressAssets({ stylesheets = [] }: WordPressAssetsProps) {
+  const hasGoogleFonts = stylesheets.some((href) =>
+    href.includes("fonts.googleapis.com"),
+  );
+
   return (
     <>
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-      <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-      <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+      {hasGoogleFonts ? (
+        <>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+          <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+          <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+        </>
+      ) : null}
       {stylesheets.map((href) => (
         <link
           key={href}

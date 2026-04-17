@@ -139,10 +139,6 @@ const CONDITIONAL_WIDGET_STYLES: Array<{
 const GOOGLE_FONT_ALLOWLIST = new Set([
   "roboto",
   "raleway",
-  "inter",
-  "dm sans",
-  "poppins",
-  "manrope",
 ]);
 
 const readJson = cache(async function readJsonFile<T>(
