@@ -8,7 +8,12 @@ import {
   renderFaqAnswerHtml,
   type EditorialArticle,
 } from "@/lib/editorial";
+import { getCombinedBlogIndex } from "@/lib/blog-index";
 import { transformExportedHtml } from "@/lib/html-transform";
+import {
+  getOptimizedWpImageByHints,
+  getOptimizedWpImageUrl,
+} from "@/lib/wp-image-variants";
 import { getRouteByPath } from "@/lib/wordpress-export";
 import { WordPressAssets } from "@/components/wordpress-assets";
 import { WordPressBodyClass } from "@/components/wordpress-body-class";
@@ -117,9 +122,88 @@ function sanitizeEditorialContent(html: string) {
   return $.root().html() ?? html;
 }
 
+function normalizePath(value: string) {
+  return value.replace(/^https?:\/\/[^/]+/i, "").replace(/\/+$/, "") || "/";
+}
+
+function cleanRelatedExcerpt(value: string) {
+  return value
+    .replace(/^\s*spis\s+tre(?:ś|s)ci\b[:\s-]*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function enhanceRelatedPostsSidebar(
+  $: CheerioAPI,
+  articleRoot: Cheerio<any>,
+  relatedPosts: Array<{
+    path: string;
+    title: string;
+    excerpt: string;
+    image: string | null;
+  }>,
+) {
+  const relatedPostsMap = new Map(
+    relatedPosts.map((item) => [normalizePath(item.path), item]),
+  );
+  const postsWidget = articleRoot.find(".elementor-widget-posts").last();
+
+  if (!postsWidget.length) {
+    return;
+  }
+
+  postsWidget.addClass("editorial-sidebar-posts");
+  const cards = postsWidget
+    .find(".elementor-post")
+    .map((_, element) => {
+      const article = $(element);
+      const titleLink = article.find(".elementor-post__title a").first();
+      const href = titleLink.attr("href") ?? "";
+      const related = relatedPostsMap.get(normalizePath(href));
+      const title = titleLink.text().trim() || related?.title || "";
+      const excerpt = cleanRelatedExcerpt(
+        related?.excerpt || article.find(".elementor-post__excerpt p").first().text() || "",
+      );
+      const optimizedImage =
+        getOptimizedWpImageUrl(related?.image, 480) ||
+        getOptimizedWpImageByHints([related?.title || title, related?.path || href], 480);
+      const safeHref = escapeHtml(related?.path || href);
+      const safeTitle = escapeHtml(title);
+      const safeExcerpt = escapeHtml(excerpt || title);
+
+      const thumbnailHtml = optimizedImage
+        ? `<a class="elementor-post__thumbnail__link" href="${safeHref}" tabindex="-1" style="position:relative;display:block;overflow:hidden;margin:0;padding:0;aspect-ratio:1 / 0.78;min-height:200px;background:linear-gradient(180deg,#f4f4f4 0%,#d8d8d8 100%);"><div class="elementor-post__thumbnail" style="position:relative;display:block;overflow:hidden;width:100%;height:100%;margin:0;padding:0;"><img decoding="async" src="${optimizedImage}" alt="${safeTitle}" loading="lazy" fetchpriority="low" style="position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;object-fit:cover;object-position:center;"></div></a>`
+        : "";
+
+      return `<article class="elementor-post elementor-grid-item" role="listitem" style="width:100%;margin:0;"><div class="elementor-post__card" style="display:grid;grid-template-rows:auto 1fr;overflow:hidden;border-radius:18px;background:#fff;box-shadow:0 18px 34px rgba(12,36,28,0.16);height:auto;">${thumbnailHtml}<div class="elementor-post__text" style="display:grid;align-content:start;gap:10px;padding:22px 24px 18px;height:auto;"><h3 class="elementor-post__title" style="margin:0;"><a href="${safeHref}" style="color:var(--brand);font-size:1.02rem;line-height:1.15;text-decoration:none;">${safeTitle}</a></h3><div class="elementor-post__excerpt" style="margin:0;"><p style="margin:0;color:#737373;font-size:13px;line-height:1.85;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;">${safeExcerpt}</p></div><div class="elementor-post__read-more-wrapper" style="margin-top:2px;"><a class="elementor-post__read-more" href="${safeHref}" aria-label="Read more about ${safeTitle}" tabindex="-1" style="color:#ff2f73;font-size:12px;font-weight:600;text-transform:uppercase;text-decoration:none;">Czytaj więcej »</a></div></div></div></article>`;
+    })
+    .get()
+    .join("");
+
+  const container = postsWidget.find(".elementor-posts-container").first();
+  if (container.length && cards) {
+    container.html(cards);
+  }
+}
+
 function injectEditorialIntoWpTemplate(
   templateHtml: string,
   article: EditorialArticle,
+  relatedPosts: Array<{
+    path: string;
+    title: string;
+    excerpt: string;
+    image: string | null;
+  }>,
 ): string {
   const $ = load(templateHtml);
   const articleRoot = $("[data-elementor-post-type='post']").first();
@@ -148,13 +232,68 @@ function injectEditorialIntoWpTemplate(
     textEditors.slice(1).remove();
   }
 
+  enhanceRelatedPostsSidebar($, articleRoot, relatedPosts);
+
   return $("body").html() ?? templateHtml;
 }
 
+function rewriteFinalRelatedPostsHtml(
+  html: string,
+  relatedPosts: Array<{
+    path: string;
+    title: string;
+    excerpt: string;
+    image: string | null;
+  }>,
+) {
+  const $ = load(html);
+  const relatedPostsMap = new Map(
+    relatedPosts.map((item) => [normalizePath(item.path), item]),
+  );
+  const container = $(".editorial-sidebar-posts .elementor-posts-container").first();
+
+  if (!container.length) {
+    return html;
+  }
+
+  const cards = container
+    .find(".elementor-post")
+    .map((_, element) => {
+      const article = $(element);
+      const titleLink = article.find(".elementor-post__title a").first();
+      const href = titleLink.attr("href") ?? "";
+      const related = relatedPostsMap.get(normalizePath(href));
+      const title = titleLink.text().trim() || related?.title || "";
+      const excerpt = cleanRelatedExcerpt(
+        related?.excerpt || article.find(".elementor-post__excerpt p").first().text() || "",
+      );
+      const optimizedImage =
+        getOptimizedWpImageUrl(related?.image, 480) ||
+        getOptimizedWpImageByHints([related?.title || title, related?.path || href], 480);
+      const safeHref = escapeHtml(related?.path || href);
+      const safeTitle = escapeHtml(title);
+      const safeExcerpt = escapeHtml(excerpt || title);
+      const thumbnailHtml = optimizedImage
+        ? `<a class="elementor-post__thumbnail__link" href="${safeHref}" tabindex="-1" style="position:relative;display:block;overflow:hidden;margin:0;padding:0;aspect-ratio:1 / 0.78;min-height:200px;background:linear-gradient(180deg,#f4f4f4 0%,#d8d8d8 100%);"><div class="elementor-post__thumbnail" style="position:relative;display:block;overflow:hidden;width:100%;height:100%;margin:0;padding:0;"><img decoding="async" src="${optimizedImage}" alt="${safeTitle}" loading="lazy" fetchpriority="low" style="position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;object-fit:cover;object-position:center;"></div></a>`
+        : "";
+
+      return `<article class="elementor-post elementor-grid-item" role="listitem" style="width:100%;margin:0;"><div class="elementor-post__card" style="display:grid;grid-template-rows:auto 1fr;overflow:hidden;border-radius:18px;background:#fff;box-shadow:0 18px 34px rgba(12,36,28,0.16);height:auto;">${thumbnailHtml}<div class="elementor-post__text" style="display:grid;align-content:start;gap:10px;padding:22px 24px 18px;height:auto;"><h3 class="elementor-post__title" style="margin:0;"><a href="${safeHref}" style="color:var(--brand);font-size:1.02rem;line-height:1.15;text-decoration:none;">${safeTitle}</a></h3><div class="elementor-post__excerpt" style="margin:0;"><p style="margin:0;color:#737373;font-size:13px;line-height:1.85;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;">${safeExcerpt}</p></div><div class="elementor-post__read-more-wrapper" style="margin-top:2px;"><a class="elementor-post__read-more" href="${safeHref}" aria-label="Read more about ${safeTitle}" tabindex="-1" style="color:#ff2f73;font-size:12px;font-weight:600;text-transform:uppercase;text-decoration:none;">Czytaj więcej »</a></div></div></div></article>`;
+    })
+    .get()
+    .join("");
+
+  if (cards) {
+    container.html(cards);
+  }
+
+  return $("body").html() ?? html;
+}
+
 export async function EditorialArticlePage({ path }: { path: string }) {
-  const [article, templateRoute] = await Promise.all([
+  const [article, templateRoute, blogIndex] = await Promise.all([
     getEditorialArticleByPath(path),
     getRouteByPath(WP_SINGLE_POST_TEMPLATE_PATH),
+    getCombinedBlogIndex(),
   ]);
 
   if (!article || article.publicationStatus !== "published") {
@@ -162,10 +301,29 @@ export async function EditorialArticlePage({ path }: { path: string }) {
   }
 
   const rawTemplateHtml = templateRoute?.html ?? "";
+  const relatedPosts = blogIndex
+    .filter((item) => item.path !== path)
+    .slice(0, 8)
+    .map((item) => ({
+      path: item.path,
+      title: item.title,
+      excerpt: item.excerpt,
+      image: item.image,
+    }));
+  const relatedPostsPayload = relatedPosts.map((item) => ({
+    path: item.path,
+    title: item.title,
+    excerpt: cleanRelatedExcerpt(item.excerpt || item.title),
+    image:
+      getOptimizedWpImageUrl(item.image, 480) ||
+      getOptimizedWpImageByHints([item.title, item.path], 480),
+  }));
   const injectedHtml = templateRoute
-    ? injectEditorialIntoWpTemplate(rawTemplateHtml, article)
+    ? injectEditorialIntoWpTemplate(rawTemplateHtml, article, relatedPosts)
     : "";
-  const finalHtml = transformExportedHtml(injectedHtml);
+  const transformedHtml = transformExportedHtml(injectedHtml);
+  const finalHtml = rewriteFinalRelatedPostsHtml(transformedHtml, relatedPosts);
+  const relatedPostsPayloadJson = JSON.stringify(relatedPostsPayload);
 
   const bodyClass = templateRoute?.bodyClass ?? "single single-post";
 
@@ -185,7 +343,7 @@ export async function EditorialArticlePage({ path }: { path: string }) {
         isSinglePost
       />
       <div
-        className="wp-mirror-page wp-mirror-page--single-post"
+        className="wp-mirror-page wp-mirror-page--single-post editorial-single-post"
         style={
           article.heroImage
             ? ({
@@ -194,6 +352,11 @@ export async function EditorialArticlePage({ path }: { path: string }) {
             : undefined
         }
       >
+        <script
+          type="application/json"
+          id="editorial-related-posts-data"
+          dangerouslySetInnerHTML={{ __html: relatedPostsPayloadJson }}
+        />
         <div className="mirror-html" dangerouslySetInnerHTML={{ __html: finalHtml }} />
       </div>
     </>

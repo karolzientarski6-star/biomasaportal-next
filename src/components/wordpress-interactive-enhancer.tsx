@@ -15,6 +15,13 @@ type BlogSearchPayload = {
   results: BlogSearchResult[];
 };
 
+type EditorialRelatedPost = {
+  path: string;
+  title: string;
+  excerpt: string;
+  image: string | null;
+};
+
 type WordPressInteractiveEnhancerProps = {
   path: string;
   featuredImage?: string | null;
@@ -468,6 +475,113 @@ function setupBlogSearch(root: ParentNode, path: string) {
   }
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function normalizePath(value: string) {
+  return value.replace(/^https?:\/\/[^/]+/i, "").replace(/\/+$/, "") || "/";
+}
+
+function setupEditorialRelatedPosts(root: ParentNode) {
+  const articleRoot =
+    root instanceof HTMLElement && root.classList.contains("editorial-single-post")
+      ? root
+      : root.querySelector<HTMLElement>(".editorial-single-post");
+  const container = articleRoot?.querySelector<HTMLElement>(".editorial-sidebar-posts .elementor-posts-container");
+
+  if (!articleRoot || !container || container.dataset.codexEditorialSidebarBound === "true") {
+    return;
+  }
+  container.dataset.codexEditorialSidebarBound = "true";
+
+  const payloadNode = articleRoot.querySelector<HTMLScriptElement>("#editorial-related-posts-data");
+  let payloadMap = new Map<string, EditorialRelatedPost>();
+
+  if (payloadNode?.textContent) {
+    try {
+      const relatedPosts = JSON.parse(payloadNode.textContent) as EditorialRelatedPost[];
+      payloadMap = new Map(
+        relatedPosts.map((item) => [normalizePath(item.path), item]),
+      );
+    } catch {
+      payloadMap = new Map();
+    }
+  }
+
+  const buildCardHtml = (item: EditorialRelatedPost) => {
+    const safeHref = escapeHtml(item.path);
+    const safeTitle = escapeHtml(item.title);
+    const safeExcerpt = escapeHtml(item.excerpt || item.title);
+    const thumbnailHtml = item.image
+      ? `<a class="elementor-post__thumbnail__link" href="${safeHref}" tabindex="-1" style="position:relative;display:block;overflow:hidden;margin:0;padding:0;aspect-ratio:1 / 0.78;min-height:200px;background:linear-gradient(180deg,#f4f4f4 0%,#d8d8d8 100%);"><div class="elementor-post__thumbnail" style="position:relative;display:block;overflow:hidden;width:100%;height:100%;margin:0;padding:0;"><img decoding="async" src="${item.image}" alt="${safeTitle}" loading="lazy" fetchpriority="low" style="position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;object-fit:cover;object-position:center;"></div></a>`
+      : "";
+
+    return `<article class="elementor-post elementor-grid-item" role="listitem" style="width:100%;margin:0;"><div class="elementor-post__card" style="display:grid;grid-template-rows:auto 1fr;overflow:hidden;border-radius:18px;background:#fff;box-shadow:0 18px 34px rgba(12,36,28,0.16);height:auto;">${thumbnailHtml}<div class="elementor-post__text" style="display:grid;align-content:start;gap:10px;padding:22px 24px 18px;height:auto;"><h3 class="elementor-post__title" style="margin:0;"><a href="${safeHref}" style="color:var(--brand);font-size:1.02rem;line-height:1.15;text-decoration:none;">${safeTitle}</a></h3><div class="elementor-post__excerpt" style="margin:0;"><p style="margin:0;color:#737373;font-size:13px;line-height:1.85;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;">${safeExcerpt}</p></div><div class="elementor-post__read-more-wrapper" style="margin-top:2px;"><a class="elementor-post__read-more" href="${safeHref}" aria-label="Read more about ${safeTitle}" tabindex="-1" style="color:#ff2f73;font-size:12px;font-weight:600;text-transform:uppercase;text-decoration:none;">Czytaj więcej »</a></div></div></div></article>`;
+  };
+
+  const fetchOgImage = async (path: string) => {
+    try {
+      const response = await fetch(path, { credentials: "same-origin" });
+      if (!response.ok) {
+        return null;
+      }
+
+      const html = await response.text();
+      const match =
+        html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+        html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+
+      return match?.[1] ?? null;
+    } catch {
+      return null;
+    }
+  };
+
+  void (async () => {
+    const items = await Promise.all(
+      Array.from(container.querySelectorAll<HTMLElement>(".elementor-post")).map(async (post) => {
+        const titleLink = post.querySelector<HTMLAnchorElement>(".elementor-post__title a");
+        const href = titleLink?.getAttribute("href") ?? "";
+        const normalizedPath = normalizePath(href);
+        const payload = payloadMap.get(normalizedPath);
+        const title =
+          titleLink?.textContent?.replace(/\s+/g, " ").trim() ||
+          payload?.title ||
+          "";
+        const fallbackExcerpt =
+          post.querySelector<HTMLElement>(".elementor-post__excerpt p")?.textContent?.replace(/\s+/g, " ").trim() ?? "";
+        const imageFromDom =
+          post.querySelector<HTMLImageElement>(".elementor-post__thumbnail img")?.getAttribute("src") || null;
+        const excerpt = (payload?.excerpt || fallbackExcerpt || title)
+          .replace(/^\s*spis\s+tre(?:ś|s)ci\b[:\s-]*/i, "")
+          .trim();
+        const fetchedImage =
+          payload?.image ||
+          imageFromDom ||
+          (href ? await fetchOgImage(href) : null);
+
+        return {
+          path: payload?.path || href,
+          title,
+          excerpt,
+          image: fetchedImage,
+        } satisfies EditorialRelatedPost;
+      }),
+    );
+
+    const cards = items.map(buildCardHtml).join("");
+    if (cards) {
+      container.innerHTML = cards;
+    }
+  })();
+}
+
 export function WordPressInteractiveEnhancer({
   path,
   featuredImage,
@@ -488,6 +602,7 @@ export function WordPressInteractiveEnhancer({
       applyFeaturedImage(root, featuredImage);
       buildTableOfContents(root);
       setupFaq(root);
+      setupEditorialRelatedPosts(root);
     }
 
     setupOffCanvas(root);

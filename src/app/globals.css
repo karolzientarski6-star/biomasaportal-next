@@ -1440,12 +1440,16 @@ img {
   text-decoration: none;
 }
 
-.editorial-sidebar-posts {
+.editorial-single-post .editorial-sidebar-posts {
   display: grid;
   gap: 18px;
 }
 
-.editorial-sidebar-posts h3 {
+.editorial-single-post .editorial-sidebar-posts.elementor-widget-posts {
+  width: 100% !important;
+}
+
+.editorial-single-post .editorial-sidebar-posts h3 {
   margin: 0;
   color: #fff;
   text-transform: uppercase;
@@ -1453,24 +1457,107 @@ img {
   font-size: 1.05rem;
 }
 
-.editorial-sidebar-posts .elementor-posts-container {
-  display: grid;
-  gap: 18px;
+.editorial-single-post .editorial-sidebar-posts .elementor-posts-container {
+  display: grid !important;
+  gap: 18px !important;
 }
 
-.editorial-sidebar-posts .elementor-post {
-  width: 100%;
+.editorial-single-post .editorial-sidebar-posts .elementor-post {
+  width: 100% !important;
+  margin: 0 !important;
 }
 
-.editorial-sidebar-posts .elementor-post__card {
-  overflow: hidden;
-  border-radius: 18px;
-  background: #fff;
+.editorial-single-post .editorial-sidebar-posts .elementor-post__card {
+  display: grid !important;
+  grid-template-rows: auto 1fr !important;
+  overflow: hidden !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-shadow: 0 18px 34px rgba(12, 36, 28, 0.16) !important;
+  height: auto !important;
 }
 
-.editorial-sidebar-posts .elementor-post__title,
-.editorial-sidebar-posts .elementor-post__title a {
-  color: var(--brand);
+.editorial-single-post .editorial-sidebar-posts .elementor-post__thumbnail__link,
+.editorial-single-post .editorial-sidebar-posts .elementor-post__thumbnail {
+  position: relative;
+  display: block !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.editorial-single-post .editorial-sidebar-posts .elementor-post__thumbnail__link {
+  aspect-ratio: 1 / 0.78 !important;
+  min-height: 200px !important;
+  background: linear-gradient(180deg, #f4f4f4 0%, #d8d8d8 100%) !important;
+}
+
+.editorial-single-post .editorial-sidebar-posts .elementor-post__thumbnail {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.editorial-single-post .editorial-sidebar-posts .elementor-post__thumbnail__link img,
+.editorial-single-post .editorial-sidebar-posts .elementor-post__thumbnail img {
+  position: absolute;
+  inset: 0;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+.editorial-single-post .editorial-sidebar-posts .elementor-post__text {
+  display: grid !important;
+  align-content: start !important;
+  gap: 10px !important;
+  padding: 22px 24px 18px !important;
+  height: auto !important;
+}
+
+.editorial-single-post .editorial-sidebar-posts .elementor-post__title {
+  margin: 0;
+}
+
+.editorial-single-post .editorial-sidebar-posts .elementor-post__title,
+.editorial-single-post .editorial-sidebar-posts .elementor-post__title a {
+  color: var(--brand) !important;
+  font-size: 1.02rem !important;
+  line-height: 1.15 !important;
+  text-decoration: none !important;
+}
+
+.editorial-single-post .editorial-sidebar-posts .elementor-post__excerpt {
+  margin: 0;
+}
+
+.editorial-single-post .editorial-sidebar-posts .elementor-post__excerpt p {
+  margin: 0 !important;
+  color: #737373 !important;
+  font-size: 13px !important;
+  line-height: 1.85 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 4 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.editorial-single-post .editorial-sidebar-posts .elementor-post__read-more-wrapper {
+  margin-top: 2px !important;
+}
+
+.editorial-single-post .editorial-sidebar-posts .elementor-post__read-more {
+  color: #ff2f73 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  text-decoration: none !important;
+}
+
+.editorial-single-post .editorial-sidebar-posts .elementor-post__meta-data {
+  display: none !important;
 }
 
 .faq-section {

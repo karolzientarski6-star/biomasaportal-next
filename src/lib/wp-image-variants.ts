@@ -26,6 +26,34 @@ type UploadImageVariant = UploadImageManifestEntry & {
 };
 
 let uploadVariantsCache: UploadImageVariant[] | null = null;
+const MATCH_STOPWORDS = new Set([
+  "a",
+  "ale",
+  "and",
+  "co",
+  "czy",
+  "dla",
+  "do",
+  "go",
+  "i",
+  "ile",
+  "in",
+  "is",
+  "jak",
+  "jest",
+  "na",
+  "o",
+  "od",
+  "or",
+  "po",
+  "przed",
+  "the",
+  "to",
+  "w",
+  "we",
+  "with",
+  "z",
+]);
 
 function toRelativeUploadUrl(url: string | null | undefined) {
   if (!url) {
@@ -93,6 +121,30 @@ function getUploadVariants() {
   }
 
   return uploadVariantsCache;
+}
+
+function normalizeTextForMatch(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function tokenizeForMatch(value: string) {
+  return Array.from(
+    new Set(
+      normalizeTextForMatch(value)
+        .split(/\s+/)
+        .filter(
+          (token) =>
+            token &&
+            (token.length > 2 || /\d/.test(token)) &&
+            !MATCH_STOPWORDS.has(token),
+        ),
+    ),
+  );
 }
 
 function chooseBestVariant(
@@ -173,6 +225,70 @@ export function getOptimizedWpImageUrl(
   quality = 75,
 ) {
   const resolvedUrl = resolveWpImageUrl(url, preferredWidth);
+
+  if (!resolvedUrl || !resolvedUrl.startsWith("/wp-content/")) {
+    return resolvedUrl;
+  }
+
+  if (!preferredWidth || preferredWidth <= 0) {
+    return resolvedUrl;
+  }
+
+  const width = getNextImageWidth(preferredWidth);
+  return `/_next/image?url=${encodeURIComponent(resolvedUrl)}&w=${width}&q=${quality}`;
+}
+
+export function resolveWpImageByHints(
+  hints: string[],
+  preferredWidth?: number | null,
+) {
+  const hintTokens = tokenizeForMatch(hints.join(" "));
+
+  if (hintTokens.length === 0) {
+    return null;
+  }
+
+  let bestMatch: UploadImageVariant | null = null;
+  let bestScore = 0;
+
+  for (const entry of getUploadVariants()) {
+    let score = 0;
+
+    for (const token of hintTokens) {
+      if (entry.tokens.includes(token)) {
+        score += 3;
+      }
+
+      if (entry.normalizedBaseName.includes(token)) {
+        score += 2;
+      }
+    }
+
+    if (
+      score > bestScore ||
+      (score === bestScore &&
+        bestMatch &&
+        ((entry.width ?? 0) > (bestMatch.width ?? 0) ||
+          entry.relativeUrl.length < bestMatch.relativeUrl.length))
+    ) {
+      bestMatch = entry;
+      bestScore = score;
+    }
+  }
+
+  if (!bestMatch || bestScore < 4) {
+    return null;
+  }
+
+  return resolveWpImageUrl(bestMatch.relativeUrl, preferredWidth);
+}
+
+export function getOptimizedWpImageByHints(
+  hints: string[],
+  preferredWidth?: number | null,
+  quality = 75,
+) {
+  const resolvedUrl = resolveWpImageByHints(hints, preferredWidth);
 
   if (!resolvedUrl || !resolvedUrl.startsWith("/wp-content/")) {
     return resolvedUrl;
