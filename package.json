@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/build-upload-image-index.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/build-upload-image-index.mjs",
     "build": "next build",
+    "prestart": "node scripts/build-upload-image-index.mjs",
     "start": "next start",
     "lint": "eslint",
     "export:wordpress": "node scripts/export-wordpress.mjs",

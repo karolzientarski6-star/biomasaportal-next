@@ -1,4 +1,4 @@
-import { existsSync, promises as fs, readdirSync } from "node:fs";
+import { promises as fs, readFileSync } from "node:fs";
 import path from "node:path";
 import { cache } from "react";
 import { load } from "cheerio";
@@ -174,14 +174,12 @@ export function extractFaqSchemaJsonLd(value: string) {
 }
 
 const ABSOLUTE_SITE_URL = "https://biomasaportal.pl";
-const PUBLIC_UPLOADS_PATH = path.join(
+const UPLOAD_IMAGE_INDEX_PATH = path.join(
   process.cwd(),
-  "public",
-  "wp-content",
-  "uploads",
+  "data",
+  "editorial",
+  "upload-image-index.json",
 );
-const IMAGE_EXTENSION_PATTERN = /\.(avif|gif|jpe?g|png|webp)$/i;
-const IMAGE_THUMBNAIL_PATTERN = /-\d+x\d+\.(avif|gif|jpe?g|png|webp)$/i;
 const MATCH_STOPWORDS = new Set([
   "a",
   "ale",
@@ -218,6 +216,13 @@ type UploadImageEntry = {
   depth: number;
 };
 
+type UploadImageManifestEntry = {
+  relativeUrl: string;
+  normalizedBaseName: string;
+  tokens: string[];
+  depth: number;
+};
+
 let uploadImageIndex: UploadImageEntry[] | null = null;
 
 function normalizeTextForMatch(value: string) {
@@ -246,31 +251,8 @@ function tokenizeForMatch(value: string) {
 
 function stripImageDecorators(fileName: string) {
   return fileName
-    .replace(IMAGE_EXTENSION_PATTERN, "")
+    .replace(/\.(avif|gif|jpe?g|png|webp)$/i, "")
     .replace(/-\d+x\d+$/i, "");
-}
-
-function walkUploadFiles(directoryPath: string, files: string[] = []) {
-  for (const entry of readdirSync(directoryPath, { withFileTypes: true })) {
-    const absolutePath = path.join(directoryPath, entry.name);
-
-    if (entry.isDirectory()) {
-      walkUploadFiles(absolutePath, files);
-      continue;
-    }
-
-    if (!IMAGE_EXTENSION_PATTERN.test(entry.name)) {
-      continue;
-    }
-
-    if (IMAGE_THUMBNAIL_PATTERN.test(entry.name)) {
-      continue;
-    }
-
-    files.push(absolutePath);
-  }
-
-  return files;
 }
 
 function getUploadImageIndex() {
@@ -278,34 +260,26 @@ function getUploadImageIndex() {
     return uploadImageIndex;
   }
 
-  if (!existsSync(PUBLIC_UPLOADS_PATH)) {
+  try {
+    const raw = readFileSync(UPLOAD_IMAGE_INDEX_PATH, "utf8");
+    const manifest = JSON.parse(raw) as UploadImageManifestEntry[];
+    uploadImageIndex = manifest
+      .map((entry) => ({
+        relativeUrl: entry.relativeUrl,
+        normalizedBaseName: entry.normalizedBaseName,
+        tokens: new Set(entry.tokens),
+        depth: entry.depth,
+      }))
+      .sort((left, right) => {
+        if (left.depth !== right.depth) {
+          return left.depth - right.depth;
+        }
+
+        return left.relativeUrl.length - right.relativeUrl.length;
+      });
+  } catch {
     uploadImageIndex = [];
-    return uploadImageIndex;
   }
-
-  uploadImageIndex = walkUploadFiles(PUBLIC_UPLOADS_PATH)
-    .map((absolutePath) => {
-      const relativeUrl = `/${path
-        .relative(path.join(process.cwd(), "public"), absolutePath)
-        .replace(/\\/g, "/")}`;
-      const normalizedBaseName = normalizeTextForMatch(
-        stripImageDecorators(path.basename(absolutePath)),
-      );
-
-      return {
-        relativeUrl,
-        normalizedBaseName,
-        tokens: new Set(tokenizeForMatch(normalizedBaseName)),
-        depth: relativeUrl.split("/").length,
-      } satisfies UploadImageEntry;
-    })
-    .sort((left, right) => {
-      if (left.depth !== right.depth) {
-        return left.depth - right.depth;
-      }
-
-      return left.relativeUrl.length - right.relativeUrl.length;
-    });
 
   return uploadImageIndex;
 }
