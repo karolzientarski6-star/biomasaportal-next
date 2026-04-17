@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { MirrorPage } from "@/components/mirror-page";
+import { NativeHomePage } from "@/components/native-home-page";
 import { buildRouteMetadata, getRouteByPath } from "@/lib/wordpress-export";
 
 /**
@@ -29,5 +29,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BiomassPortalLegacyPage() {
-  return <MirrorPage path="/" />;
+  const route = await getRouteByPath("/");
+
+  if (!route) {
+    return null;
+  }
+
+  return <NativeHomePage route={route} />;
 }
