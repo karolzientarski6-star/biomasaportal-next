@@ -1,5 +1,6 @@
 import { load } from "cheerio";
 import { EDITORIAL_CATEGORIES } from "@/lib/editorial-categories";
+import { getOptimizedWpImageUrl, resolveWpImageUrl } from "@/lib/wp-image-variants";
 
 const ABSOLUTE_SITE_URL = "https://biomasaportal.pl";
 const PERSISTENT_HIDDEN_BUTTON_LABELS = new Set([
@@ -259,7 +260,7 @@ export function transformExportedHtml(html: string) {
       return;
     }
 
-    $(element).attr("src", toAbsoluteSiteUrl(src));
+    $(element).attr("src", resolveWpImageUrl(toAbsoluteSiteUrl(src)) ?? toAbsoluteSiteUrl(src));
   });
 
   $("[srcset]").each((_, element) => {
@@ -292,6 +293,16 @@ export function transformExportedHtml(html: string) {
 
   $("img").each((index, element) => {
     const image = $(element);
+    const widthAttr = Number.parseInt(image.attr("width") ?? "", 10);
+    const optimizedSrc = getOptimizedWpImageUrl(
+      image.attr("src"),
+      Number.isFinite(widthAttr) && widthAttr > 0 ? widthAttr * 2 : null,
+    );
+
+    if (optimizedSrc) {
+      image.attr("src", optimizedSrc);
+    }
+
     image.attr("decoding", "async");
 
     if (!image.attr("loading")) {
@@ -299,7 +310,9 @@ export function transformExportedHtml(html: string) {
     }
 
     if (!image.attr("fetchpriority")) {
-      image.attr("fetchpriority", index === 0 ? "high" : "low");
+      const isHeaderImage = image.parents("header").length > 0;
+      const shouldPrioritize = index === 0 && widthAttr >= 480 && !isHeaderImage;
+      image.attr("fetchpriority", shouldPrioritize ? "high" : "low");
     }
   });
 
@@ -321,12 +334,13 @@ export function transformExportedHtml(html: string) {
  * Converts https://biomasaportal.pl/wp-content/... → /wp-content/...
  * Leaves relative paths and non-WP URLs unchanged.
  */
-export function normalizeWpImageUrl(url: string | null | undefined): string | null {
+export function normalizeWpImageUrl(
+  url: string | null | undefined,
+  preferredWidth?: number | null,
+): string | null {
   if (!url) return null;
-  if (url.startsWith(`${ABSOLUTE_SITE_URL}/wp-content/`)) {
-    return url.slice(ABSOLUTE_SITE_URL.length);
-  }
-  return url;
+
+  return resolveWpImageUrl(url, preferredWidth);
 }
 
 type HtmlSlot = {

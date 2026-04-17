@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { BlogIndexItem } from "@/lib/blog-index";
 import type { ElementorWidgetSignature } from "@/lib/elementor-posts-widget";
 import type { EditorialCategory } from "@/lib/editorial-categories";
-import { normalizeWpImageUrl } from "@/lib/html-transform";
+import { getOptimizedWpImageUrl } from "@/lib/wp-image-variants";
 
 type BlogArchiveGridProps = {
   items: BlogIndexItem[];
@@ -139,7 +139,7 @@ export function BlogArchiveGrid({
                     (cardProps.className as string | undefined) ?? "elementor-post__card"
                   }
                 >
-                  {normalizeWpImageUrl(item.image) ? (
+                  {getOptimizedWpImageUrl(item.image, 640) ? (
                     <Link
                       {...thumbnailLinkProps}
                       className={
@@ -158,7 +158,7 @@ export function BlogArchiveGrid({
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={normalizeWpImageUrl(item.image) ?? ""}
+                          src={getOptimizedWpImageUrl(item.image, 640) ?? ""}
                           alt={item.title}
                           loading="lazy"
                           decoding="async"

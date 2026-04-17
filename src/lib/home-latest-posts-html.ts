@@ -1,6 +1,6 @@
 import type { BlogIndexItem } from "@/lib/blog-index";
 import type { ElementorWidgetSignature } from "@/lib/elementor-posts-widget";
-import { normalizeWpImageUrl } from "@/lib/html-transform";
+import { getOptimizedWpImageUrl } from "@/lib/wp-image-variants";
 
 const dayMonthFormatter = new Intl.DateTimeFormat("pl-PL", {
   day: "numeric",
@@ -90,7 +90,7 @@ function renderPostsGrid(
 
   const cardsHtml = items
     .map((item) => {
-      const imageUrl = normalizeWpImageUrl(item.image);
+      const imageUrl = getOptimizedWpImageUrl(item.image, 640);
       const thumbnailHtml = imageUrl
         ? `<a${toAttributes({
             ...thumbnailLinkAttributes,
