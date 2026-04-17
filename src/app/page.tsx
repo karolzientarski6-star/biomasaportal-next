@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { BlogArchiveGrid } from "@/components/blog-archive-grid";
+import { HomeLatestPostsSection } from "@/components/home-latest-posts-section";
 import { MirrorTemplatePage } from "@/components/mirror-template-page";
 import { getCombinedBlogIndex } from "@/lib/blog-index";
 import { extractElementorPostsWidgetSignatures } from "@/lib/elementor-posts-widget";
@@ -43,36 +42,13 @@ export default async function HomePage() {
       route={route ?? undefined}
       slots={[
         {
-          selector: ".elementor-element-b47130f",
-          slotId: "home-latest-posts-grid",
+          selector: ".elementor-element-64cd8fb",
+          slotId: "home-latest-posts-section",
           node: (
-            <BlogArchiveGrid
+            <HomeLatestPostsSection
               items={latestItems}
-              perPage={8}
-              basePath="/wpisy/"
               widgetSignature={widgetSignature}
-              showSummary={false}
             />
-          ),
-        },
-        {
-          selector: ".elementor-element-ca41823",
-          slotId: "home-latest-posts-cta",
-          node: (
-            <div className="elementor-element elementor-element-ca41823 elementor-align-right elementor-mobile-align-center elementor-widget elementor-widget-button">
-              <div className="elementor-widget-container">
-                <div className="elementor-button-wrapper">
-                  <Link
-                    className="elementor-button elementor-button-link elementor-size-xs"
-                    href="/wpisy/"
-                  >
-                    <span className="elementor-button-content-wrapper">
-                      <span className="elementor-button-text">Wszystkie wpisy</span>
-                    </span>
-                  </Link>
-                </div>
-              </div>
-            </div>
           ),
         },
       ]}
