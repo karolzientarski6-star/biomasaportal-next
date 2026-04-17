@@ -1,4 +1,4 @@
-import { promises as fs } from "node:fs";
+import { existsSync, promises as fs, readdirSync } from "node:fs";
 import path from "node:path";
 import { cache } from "react";
 import { load } from "cheerio";
@@ -174,8 +174,248 @@ export function extractFaqSchemaJsonLd(value: string) {
 }
 
 const ABSOLUTE_SITE_URL = "https://biomasaportal.pl";
+const PUBLIC_UPLOADS_PATH = path.join(
+  process.cwd(),
+  "public",
+  "wp-content",
+  "uploads",
+);
+const IMAGE_EXTENSION_PATTERN = /\.(avif|gif|jpe?g|png|webp)$/i;
+const IMAGE_THUMBNAIL_PATTERN = /-\d+x\d+\.(avif|gif|jpe?g|png|webp)$/i;
+const MATCH_STOPWORDS = new Set([
+  "a",
+  "ale",
+  "and",
+  "co",
+  "czy",
+  "dla",
+  "do",
+  "go",
+  "i",
+  "ile",
+  "in",
+  "is",
+  "jak",
+  "jest",
+  "na",
+  "o",
+  "od",
+  "or",
+  "po",
+  "przed",
+  "the",
+  "to",
+  "w",
+  "we",
+  "with",
+  "z",
+]);
 
-export function sanitizeEditorialHtml(html: string) {
+type UploadImageEntry = {
+  relativeUrl: string;
+  normalizedBaseName: string;
+  tokens: Set<string>;
+  depth: number;
+};
+
+let uploadImageIndex: UploadImageEntry[] | null = null;
+
+function normalizeTextForMatch(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function tokenizeForMatch(value: string) {
+  return Array.from(
+    new Set(
+      normalizeTextForMatch(value)
+        .split(/\s+/)
+        .filter(
+          (token) =>
+            token &&
+            (token.length > 2 || /\d/.test(token)) &&
+            !MATCH_STOPWORDS.has(token),
+        ),
+    ),
+  );
+}
+
+function stripImageDecorators(fileName: string) {
+  return fileName
+    .replace(IMAGE_EXTENSION_PATTERN, "")
+    .replace(/-\d+x\d+$/i, "");
+}
+
+function walkUploadFiles(directoryPath: string, files: string[] = []) {
+  for (const entry of readdirSync(directoryPath, { withFileTypes: true })) {
+    const absolutePath = path.join(directoryPath, entry.name);
+
+    if (entry.isDirectory()) {
+      walkUploadFiles(absolutePath, files);
+      continue;
+    }
+
+    if (!IMAGE_EXTENSION_PATTERN.test(entry.name)) {
+      continue;
+    }
+
+    if (IMAGE_THUMBNAIL_PATTERN.test(entry.name)) {
+      continue;
+    }
+
+    files.push(absolutePath);
+  }
+
+  return files;
+}
+
+function getUploadImageIndex() {
+  if (uploadImageIndex) {
+    return uploadImageIndex;
+  }
+
+  if (!existsSync(PUBLIC_UPLOADS_PATH)) {
+    uploadImageIndex = [];
+    return uploadImageIndex;
+  }
+
+  uploadImageIndex = walkUploadFiles(PUBLIC_UPLOADS_PATH)
+    .map((absolutePath) => {
+      const relativeUrl = `/${path
+        .relative(path.join(process.cwd(), "public"), absolutePath)
+        .replace(/\\/g, "/")}`;
+      const normalizedBaseName = normalizeTextForMatch(
+        stripImageDecorators(path.basename(absolutePath)),
+      );
+
+      return {
+        relativeUrl,
+        normalizedBaseName,
+        tokens: new Set(tokenizeForMatch(normalizedBaseName)),
+        depth: relativeUrl.split("/").length,
+      } satisfies UploadImageEntry;
+    })
+    .sort((left, right) => {
+      if (left.depth !== right.depth) {
+        return left.depth - right.depth;
+      }
+
+      return left.relativeUrl.length - right.relativeUrl.length;
+    });
+
+  return uploadImageIndex;
+}
+
+function toRelativeUploadUrl(url: string | null | undefined) {
+  if (!url) {
+    return null;
+  }
+
+  const normalized = url.trim();
+
+  if (normalized.startsWith("/wp-content/")) {
+    return normalized.split("?")[0] ?? normalized;
+  }
+
+  if (normalized.startsWith(`${ABSOLUTE_SITE_URL}/wp-content/`)) {
+    return normalized.slice(ABSOLUTE_SITE_URL.length).split("?")[0] ?? normalized;
+  }
+
+  try {
+    const parsed = new URL(normalized);
+    if (parsed.pathname.startsWith("/wp-content/")) {
+      return parsed.pathname;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function resolveEditorialUploadUrl(
+  url: string | null | undefined,
+  hints: string[] = [],
+) {
+  if (!url) {
+    return null;
+  }
+
+  const relativeUploadUrl = toRelativeUploadUrl(url);
+
+  if (!relativeUploadUrl) {
+    return url;
+  }
+
+  if (getUploadImageIndex().some((entry) => entry.relativeUrl === relativeUploadUrl)) {
+    return relativeUploadUrl;
+  }
+
+  const desiredBaseName = normalizeTextForMatch(
+    stripImageDecorators(path.basename(relativeUploadUrl)),
+  );
+  const desiredTokens = tokenizeForMatch(desiredBaseName);
+  const hintTokens = tokenizeForMatch(hints.join(" "));
+  const folderPrefixMatch = relativeUploadUrl.match(
+    /^\/wp-content\/uploads\/\d{4}\/\d{2}\//,
+  );
+  const preferredFolderPrefix = folderPrefixMatch?.[0] ?? null;
+
+  let bestMatch: UploadImageEntry | null = null;
+  let bestScore = 0;
+
+  for (const entry of getUploadImageIndex()) {
+    let score = 0;
+
+    if (entry.normalizedBaseName === desiredBaseName) {
+      return entry.relativeUrl;
+    }
+
+    for (const token of desiredTokens) {
+      if (entry.tokens.has(token)) {
+        score += 5;
+      }
+    }
+
+    for (const token of hintTokens) {
+      if (entry.tokens.has(token)) {
+        score += 2;
+      }
+    }
+
+    if (desiredBaseName && entry.normalizedBaseName.includes(desiredBaseName)) {
+      score += 8;
+    }
+
+    if (preferredFolderPrefix && entry.relativeUrl.startsWith(preferredFolderPrefix)) {
+      score += 2;
+    }
+
+    if (
+      score > bestScore ||
+      (score === bestScore &&
+        bestMatch &&
+        (entry.depth < bestMatch.depth ||
+          (entry.depth === bestMatch.depth &&
+            entry.relativeUrl.length < bestMatch.relativeUrl.length)))
+    ) {
+      bestMatch = entry;
+      bestScore = score;
+    }
+  }
+
+  if (bestMatch && bestScore >= 4) {
+    return bestMatch.relativeUrl;
+  }
+
+  return relativeUploadUrl;
+}
+
+export function sanitizeEditorialHtml(html: string, hints: string[] = []) {
   const $ = load(html || "");
   $("script").remove();
 
@@ -190,8 +430,9 @@ export function sanitizeEditorialHtml(html: string) {
 
     // Normalize absolute WP URLs → relative so Vercel serves them from /public/
     const src = image.attr("src");
-    if (src?.startsWith(`${ABSOLUTE_SITE_URL}/wp-content/`)) {
-      image.attr("src", src.slice(ABSOLUTE_SITE_URL.length));
+    const resolvedSrc = resolveEditorialUploadUrl(src, hints);
+    if (resolvedSrc) {
+      image.attr("src", resolvedSrc);
     }
 
     // Strip srcset for WP images — resized variants don't exist in /public/
@@ -205,7 +446,7 @@ export function sanitizeEditorialHtml(html: string) {
   return $.root().html() ?? html;
 }
 
-export function extractEditorialHeroImage(html: string) {
+export function extractEditorialHeroImage(html: string, hints: string[] = []) {
   const $ = load(html || "");
   const src =
     $("img").first().attr("src") ||
@@ -218,15 +459,16 @@ export function extractEditorialHeroImage(html: string) {
 
   // Return relative path so Vercel serves the file from /public/
   if (src.startsWith(`${ABSOLUTE_SITE_URL}/wp-content/`)) {
-    return src.slice(ABSOLUTE_SITE_URL.length);
+    return resolveEditorialUploadUrl(src, hints);
   }
 
   // Already relative or external URL — keep as-is
-  return src;
+  return resolveEditorialUploadUrl(src, hints);
 }
 
 function mapSeedItemToArticle(seed: EditorialSeedItem): EditorialArticle {
   const category = inferEditorialCategory(seed.keyword, seed.title, seed.htmlArticle);
+  const imageHints = [seed.title, seed.slug, seed.keyword, seed.path];
 
   return {
     id: `seed-${seed.sourceRow}`,
@@ -238,7 +480,7 @@ function mapSeedItemToArticle(seed: EditorialSeedItem): EditorialArticle {
     path: seed.path,
     metaTitle: seed.metaTitle || seed.title,
     metaDescription: seed.metaDescription,
-    htmlContent: sanitizeEditorialHtml(seed.htmlArticle),
+    htmlContent: sanitizeEditorialHtml(seed.htmlArticle, imageHints),
     faqSchema: extractFaqSchemaJsonLd(seed.faqSchema)[0] ?? null,
     imagePrompts: seed.imagePrompts || null,
     publicationStatus: seed.initialStatus,
@@ -246,11 +488,13 @@ function mapSeedItemToArticle(seed: EditorialSeedItem): EditorialArticle {
     scheduledFor: null,
     categorySlug: category?.slug ?? "biomasa",
     categoryName: category?.name ?? "Biomasa",
-    heroImage: extractEditorialHeroImage(seed.htmlArticle),
+    heroImage: extractEditorialHeroImage(seed.htmlArticle, imageHints),
   };
 }
 
 function mapDbRecordToArticle(record: EditorialArticleRecord): EditorialArticle {
+  const imageHints = [record.title, record.slug, record.keyword, record.path];
+
   return {
     id: record.id,
     sourceRow: record.source_row,
@@ -261,7 +505,7 @@ function mapDbRecordToArticle(record: EditorialArticleRecord): EditorialArticle 
     path: record.path,
     metaTitle: record.meta_title || record.title,
     metaDescription: record.meta_description,
-    htmlContent: sanitizeEditorialHtml(record.html_content),
+    htmlContent: sanitizeEditorialHtml(record.html_content, imageHints),
     faqSchema: record.faq_schema,
     imagePrompts: record.image_prompts,
     publicationStatus: record.publication_status,
@@ -269,7 +513,9 @@ function mapDbRecordToArticle(record: EditorialArticleRecord): EditorialArticle 
     scheduledFor: record.scheduled_for,
     categorySlug: record.category_slug,
     categoryName: record.category_name,
-    heroImage: record.hero_image || extractEditorialHeroImage(record.html_content),
+    heroImage:
+      resolveEditorialUploadUrl(record.hero_image, imageHints) ??
+      extractEditorialHeroImage(record.html_content, imageHints),
   };
 }
 
