@@ -209,6 +209,43 @@ img {
   min-height: 100vh;
 }
 
+[data-aos] {
+  opacity: 0;
+  transition-property: opacity, transform;
+  transition-duration: 0.7s;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+[data-aos="fade-in"] {
+  transform: translate3d(0, 0, 0);
+}
+
+[data-aos="fade-up"] {
+  transform: translate3d(0, 22px, 0);
+}
+
+[data-aos="fade-right"] {
+  transform: translate3d(-24px, 0, 0);
+}
+
+[data-aos="fade-left"] {
+  transform: translate3d(24px, 0, 0);
+}
+
+[data-aos="fade-down"] {
+  transform: translate3d(0, -22px, 0);
+}
+
+[data-aos="zoom-in"] {
+  transform: scale(0.96);
+}
+
+[data-aos].aos-animate {
+  opacity: 1;
+  transform: none;
+}
+
 .page-transition-accent {
   position: fixed;
   inset: 0 auto auto 0;

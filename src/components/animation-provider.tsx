@@ -21,25 +21,51 @@ export function AnimationProvider() {
       window.__codexAos?.refreshHard();
     };
 
-    void import("aos").then(({ default: AOS }) => {
-      if (!active) {
+    const shouldLoadAos = () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return false;
+      }
+
+      return Boolean(document.querySelector("[data-aos]"));
+    };
+
+    const scheduleImport = () => {
+      if (!shouldLoadAos()) {
         return;
       }
 
-      AOS.init({
-        duration: 700,
-        easing: "ease-out-cubic",
-        once: true,
-        offset: 48,
+      void import("aos").then(({ default: AOS }) => {
+        if (!active) {
+          return;
+        }
+
+        AOS.init({
+          duration: 700,
+          easing: "ease-out-cubic",
+          once: true,
+          offset: 48,
+        });
+        window.__codexAos = AOS;
+        handleRefresh();
       });
-      window.__codexAos = AOS;
-      handleRefresh();
-    });
+    };
+
+    let cleanupIdle: (() => void) | null = null;
+    if ("requestIdleCallback" in window) {
+      const idleHandle = window.requestIdleCallback(scheduleImport, {
+        timeout: 1400,
+      });
+      cleanupIdle = () => window.cancelIdleCallback(idleHandle);
+    } else {
+      const timeout = globalThis.setTimeout(scheduleImport, 220);
+      cleanupIdle = () => globalThis.clearTimeout(timeout);
+    }
 
     window.addEventListener("codex:aos-refresh", handleRefresh);
 
     return () => {
       active = false;
+      cleanupIdle?.();
       window.removeEventListener("codex:aos-refresh", handleRefresh);
     };
   }, []);

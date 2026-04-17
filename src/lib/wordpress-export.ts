@@ -100,6 +100,7 @@ const ROUTES_DIR = path.join(DATA_DIR, "routes");
 const ALWAYS_DROP_STYLESHEET_PATTERNS = [
   "/plugins/cookie-notice/css/front.min.css",
   "/assets/lib/animations/styles/",
+  "/plugins/woocommerce/assets/client/blocks/wc-blocks.css",
 ];
 
 const CONDITIONAL_WIDGET_STYLES: Array<{

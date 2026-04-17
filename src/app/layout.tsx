@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "aos/dist/aos.css";
 import { Suspense } from "react";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { AnimationProvider } from "@/components/animation-provider";

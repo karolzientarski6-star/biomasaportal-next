@@ -1,26 +1,60 @@
 "use client";
 
-import { AnimatePresence, LazyMotion, domAnimation, m } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type PageTransitionProps = {
   children: React.ReactNode;
 };
 
+type FramerMotionModule = typeof import("framer-motion");
+
+function scheduleMotionImport(callback: () => void) {
+  if (typeof window === "undefined") {
+    return () => undefined;
+  }
+
+  if ("requestIdleCallback" in window) {
+    const idleHandle = window.requestIdleCallback(callback, { timeout: 1400 });
+    return () => window.cancelIdleCallback(idleHandle);
+  }
+
+  const timeout = globalThis.setTimeout(callback, 220);
+  return () => globalThis.clearTimeout(timeout);
+}
+
 export function PageTransition({ children }: PageTransitionProps) {
   const pathname = usePathname();
+  const [motionModule, setMotionModule] = useState<FramerMotionModule | null>(null);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    return scheduleMotionImport(() => {
+      void import("framer-motion").then((module) => {
+        setMotionModule(module);
+      });
+    });
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       window.dispatchEvent(new CustomEvent("codex:aos-refresh"));
       window.dispatchEvent(new CustomEvent("biomasa:page-transition-complete"));
-    }, 420);
+    }, motionModule ? 420 : 90);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [pathname]);
+  }, [motionModule, pathname]);
+
+  if (!motionModule) {
+    return <div className="page-transition-shell">{children}</div>;
+  }
+
+  const { AnimatePresence, LazyMotion, domAnimation, m } = motionModule;
 
   return (
     <LazyMotion features={domAnimation}>
