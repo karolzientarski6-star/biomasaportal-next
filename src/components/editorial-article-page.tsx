@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { load, type CheerioAPI, type Cheerio } from "cheerio";
 import { notFound } from "next/navigation";
 import {
+  extractFaqSchemaJsonLd,
   getEditorialArticleByPath,
   getEditorialFaqEntries,
   renderFaqAnswerHtml,
@@ -104,15 +105,21 @@ function injectEditorialIntoWpTemplate(
   const introHtml = article.metaDescription
     ? `<p>${article.metaDescription}</p>`
     : "";
-  const contentHtml = `${introHtml}${article.htmlContent}${faqHtml}`;
+  const contentHtml = `${article.htmlContent}${faqHtml}`;
 
   const textEditors = articleRoot.find(".elementor-widget-text-editor").filter((_, el) => {
     const text = $(el).text().trim();
     return !text.includes("Max Digital") && text.length > 20;
   });
 
-  replaceWidgetInnerHtml(textEditors.first(), contentHtml);
-  textEditors.slice(1).remove();
+  if (textEditors.length >= 2) {
+    replaceWidgetInnerHtml(textEditors.first(), introHtml || "<p>&nbsp;</p>");
+    replaceWidgetInnerHtml(textEditors.eq(1), contentHtml);
+    textEditors.slice(2).remove();
+  } else {
+    replaceWidgetInnerHtml(textEditors.first(), `${introHtml}${contentHtml}`);
+    textEditors.slice(1).remove();
+  }
 
   return $("body").html() ?? templateHtml;
 }
@@ -142,7 +149,7 @@ export async function EditorialArticlePage({ path }: { path: string }) {
       <WordPressSeoScripts
         schemaJsonLd={[
           buildArticleSchema(article),
-          ...(article.faqSchema ? [article.faqSchema] : []),
+          ...extractFaqSchemaJsonLd(article.faqSchema ?? ""),
         ]}
       />
       <WordPressInteractiveEnhancer
