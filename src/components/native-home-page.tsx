@@ -1,8 +1,12 @@
 import type { CSSProperties } from "react";
 import {
+  NativeHomeAboutSection,
+  NativeHomeBrandSection,
+  NativeHomeCommunitySection,
   NativeHomeForestSection,
   NativeHomeHeroSection,
   NativeHomeLatestPostsSection,
+  NativeHomePartnersSection,
 } from "@/components/native-home-sections";
 import { NativePreviewFooter } from "@/components/native-preview-footer";
 import { NativePreviewHeader } from "@/components/native-preview-header";
@@ -19,6 +23,16 @@ type NativeHomePageProps = {
   route: ExportedRoute;
 };
 
+function filterNativeChromeStylesheets(stylesheets: string[]) {
+  return stylesheets.filter(
+    (href) =>
+      !href.includes("/themes/hello-elementor/header-footer.min.css") &&
+      !href.includes("/plugins/elementor-pro/assets/css/widget-nav-menu.min.css") &&
+      !href.includes("/plugins/elementor-pro/assets/css/widget-off-canvas.min.css") &&
+      !href.includes("/plugins/elementor-pro/assets/css/modules/sticky.min.css"),
+  );
+}
+
 export async function NativeHomePage({ route }: NativeHomePageProps) {
   const blogItems = await getCombinedBlogIndex();
   const latestItems = blogItems.slice(0, 8);
@@ -31,7 +45,7 @@ export async function NativeHomePage({ route }: NativeHomePageProps) {
   return (
     <>
       <WordPressBodyClass className={route.bodyClass} />
-      <WordPressAssets stylesheets={route.stylesheets} />
+      <WordPressAssets stylesheets={filterNativeChromeStylesheets(route.stylesheets)} />
       <WordPressSeoScripts schemaJsonLd={route.schemaJsonLd} />
       <WordPressInteractiveEnhancer path="/" />
       <div
@@ -66,10 +80,25 @@ export async function NativeHomePage({ route }: NativeHomePageProps) {
             items={latestItems}
             widgetSignature={widgetSignature}
           />
-          <div dangerouslySetInnerHTML={{ __html: homeData.communityHtml }} />
-          <div dangerouslySetInnerHTML={{ __html: homeData.aboutHtml }} />
-          <div dangerouslySetInnerHTML={{ __html: homeData.brandHtml }} />
-          <div dangerouslySetInnerHTML={{ __html: homeData.partnersHtml }} />
+          <NativeHomeCommunitySection
+            title={homeData.communityTitle}
+            primaryButtonHref={homeData.communityPrimaryButtonHref}
+            primaryButtonLabel={homeData.communityPrimaryButtonLabel}
+            secondaryTitle={homeData.communitySecondaryTitle}
+            secondaryButtonHref={homeData.communitySecondaryButtonHref}
+            secondaryButtonLabel={homeData.communitySecondaryButtonLabel}
+          />
+          <NativeHomeAboutSection
+            title={homeData.aboutTitle}
+            logo={homeData.aboutLogo}
+            paragraphs={homeData.aboutParagraphs}
+          />
+          <NativeHomeBrandSection title={homeData.brandTitle} />
+          <NativeHomePartnersSection
+            title={homeData.partnersTitle}
+            logo={homeData.partnersLogo}
+            partners={homeData.partners}
+          />
         </div>
         <NativePreviewFooter />
       </div>

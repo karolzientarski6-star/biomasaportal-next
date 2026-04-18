@@ -18,6 +18,16 @@ type NativePublicPageFrameProps = {
   children: React.ReactNode;
 };
 
+function filterNativeChromeStylesheets(stylesheets: string[]) {
+  return stylesheets.filter(
+    (href) =>
+      !href.includes("/themes/hello-elementor/header-footer.min.css") &&
+      !href.includes("/plugins/elementor-pro/assets/css/widget-nav-menu.min.css") &&
+      !href.includes("/plugins/elementor-pro/assets/css/widget-off-canvas.min.css") &&
+      !href.includes("/plugins/elementor-pro/assets/css/modules/sticky.min.css"),
+  );
+}
+
 export function NativePublicPageFrame({
   path,
   route,
@@ -29,7 +39,9 @@ export function NativePublicPageFrame({
   children,
 }: NativePublicPageFrameProps) {
   const bodyClass = providedBodyClass ?? route?.bodyClass ?? "";
-  const stylesheets = providedStylesheets ?? route?.stylesheets ?? [];
+  const stylesheets = filterNativeChromeStylesheets(
+    providedStylesheets ?? route?.stylesheets ?? [],
+  );
   const schemaJsonLd = providedSchemaJsonLd ?? route?.schemaJsonLd ?? [];
   const openGraphImage = featuredImage ?? route?.openGraph.image ?? null;
   const singlePost = isSinglePost || bodyClass.includes("single-post");

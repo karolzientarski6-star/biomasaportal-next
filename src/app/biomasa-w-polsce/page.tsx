@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EditorialCategoryHub } from "@/components/editorial-category-hub";
-import { WordPressFramePage } from "@/components/wordpress-frame-page";
+import { NativePublicPageFrame } from "@/components/native-public-page-frame";
 import { buildEditorialArchiveMetadata } from "@/lib/editorial";
 import { getCombinedBlogIndex } from "@/lib/blog-index";
 import { EDITORIAL_CATEGORIES } from "@/lib/editorial-categories";
@@ -34,8 +34,8 @@ export default async function BiomasaInPolandPage() {
   }));
 
   return (
-    <WordPressFramePage path="/biomasa-w-polsce/" route={templateRoute}>
+    <NativePublicPageFrame path="/biomasa-w-polsce/" route={templateRoute}>
       <EditorialCategoryHub categories={categories} latestItems={items} />
-    </WordPressFramePage>
+    </NativePublicPageFrame>
   );
 }

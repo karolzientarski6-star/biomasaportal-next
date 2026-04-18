@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { signOutAction } from "@/app/actions/auth";
+import { NativePreviewFooter } from "@/components/native-preview-footer";
+import { NativePreviewHeader } from "@/components/native-preview-header";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type SiteShellProps = {
@@ -31,69 +33,34 @@ export async function SiteShell({ children }: SiteShellProps) {
 
   return (
     <div className="site-shell">
-      <header className="site-header">
-        <div className="site-header__inner">
-          <Link href="/" className="site-brand">
-            {/* Logo — serwowane przez rewrite /wp-content/ → wp.biomasaportal.pl */}
-            <img
-              src="/wp-content/uploads/2024/01/cropped-biomasaportal.png"
-              alt="BiomasaPortal"
-              width={40}
-              height={40}
-              className="site-brand__logo"
-            />
-            <div className="site-brand__text">
-              <strong>BiomasaPortal</strong>
-            </div>
-          </Link>
-
-          <nav className="site-nav" aria-label="Główna nawigacja">
-            {navItems
-              .filter((item) => {
-                if (item.hideWhenLoggedIn && userEmail) return false;
-                if (item.showWhenLoggedIn && !userEmail) return false;
-                return true;
-              })
-              .map((item) => (
-                <Link key={item.href} href={item.href}>
-                  {item.label}
-                </Link>
-              ))}
-            <Link href="/dodaj-ogloszenie/" className="site-nav__cta">
-              Dodaj ogłoszenie
-            </Link>
-            {userEmail ? (
+      <NativePreviewHeader />
+      {userEmail ? (
+        <div className="site-shell__utility">
+          <div className="site-shell__utility-inner">
+            <span className="site-shell__utility-email">{userEmail}</span>
+            <nav className="site-shell__utility-links" aria-label="Panel użytkownika">
+              {navItems
+                .filter((item) => {
+                  if (item.hideWhenLoggedIn && userEmail) return false;
+                  if (item.showWhenLoggedIn && !userEmail) return false;
+                  return true;
+                })
+                .map((item) => (
+                  <Link key={item.href} href={item.href}>
+                    {item.label}
+                  </Link>
+                ))}
               <form action={signOutAction}>
                 <button type="submit" className="secondary-button">
                   Wyloguj
                 </button>
               </form>
-            ) : null}
-          </nav>
+            </nav>
+          </div>
         </div>
-      </header>
-
+      ) : null}
       <main className="site-main">{children}</main>
-
-      <footer className="site-footer">
-        <div className="site-footer__inner">
-          <span>© {new Date().getFullYear()} Biomasa Portal</span>
-          <nav className="site-footer__nav" aria-label="Nawigacja stopki">
-            <Link href="/ogloszenia/">Ogłoszenia</Link>
-            <Link href="/dodaj-ogloszenie/">Dodaj ogłoszenie</Link>
-            <Link href="/moje-ogloszenia/">Moje ogłoszenia</Link>
-            <Link href="/zaloguj-sie/">Zaloguj się</Link>
-            <Link href="/zaloz-konto/">Załóż konto</Link>
-            <Link href="/polityka-prywatnosci/">Polityka prywatności</Link>
-            <Link href="/regulamin/">Regulamin</Link>
-          </nav>
-          <address className="site-footer__contact">
-            <a href="tel:+48511430886">+48 511 430 886</a>
-            {" · "}
-            <a href="mailto:kontakt@biomasaportal.pl">kontakt@biomasaportal.pl</a>
-          </address>
-        </div>
-      </footer>
+      <NativePreviewFooter />
     </div>
   );
 }

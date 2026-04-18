@@ -1,305 +1,196 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { EDITORIAL_CATEGORIES } from "@/lib/editorial-categories";
+
+function isActivePath(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === "/";
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 function MegaMenu() {
   return (
-    <li className="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children biomasa-mega-menu">
-      <Link href="/biomasa-w-polsce/" className="elementor-item">
+    <div className="native-site-header__mega">
+      <Link href="/biomasa-w-polsce/" className="native-site-header__nav-link">
         Biomasa w Polsce
       </Link>
-      <ul className="sub-menu elementor-nav-menu--dropdown biomasa-mega-menu__panel">
+      <div className="native-site-header__mega-panel">
         {EDITORIAL_CATEGORIES.map((category) => (
-          <li key={category.slug} className="menu-item biomasa-mega-menu__item">
-            <Link
-              href={`/biomasa-w-polsce/${category.slug}/`}
-              className="elementor-sub-item biomasa-mega-menu__link"
-              tabIndex={-1}
-            >
-              <span className="biomasa-mega-menu__eyebrow">{category.accentLabel}</span>
-              <span className="biomasa-mega-menu__label">{category.name}</span>
-              <span className="biomasa-mega-menu__copy">{category.shortDescription}</span>
-            </Link>
-          </li>
+          <Link
+            key={category.slug}
+            href={`/biomasa-w-polsce/${category.slug}/`}
+            className="native-site-header__mega-card"
+          >
+            <span className="native-site-header__mega-eyebrow">
+              {category.accentLabel}
+            </span>
+            <strong>{category.name}</strong>
+            <span>{category.shortDescription}</span>
+          </Link>
         ))}
-      </ul>
-    </li>
+      </div>
+    </div>
+  );
+}
+
+function MobileClusterLinks({ onNavigate }: { onNavigate: () => void }) {
+  return (
+    <div className="native-site-header__mobile-clusters">
+      <p>Biomasa w Polsce</p>
+      <div className="native-site-header__mobile-cluster-grid">
+        {EDITORIAL_CATEGORIES.map((category) => (
+          <Link
+            key={category.slug}
+            href={`/biomasa-w-polsce/${category.slug}/`}
+            className="native-site-header__mobile-cluster-card"
+            onClick={onNavigate}
+          >
+            <span>{category.accentLabel}</span>
+            <strong>{category.name}</strong>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 
 export function NativePreviewHeader() {
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = previousOverflow || "";
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
   return (
-    <header
-      data-elementor-type="header"
-      data-elementor-id="19"
-      className="elementor elementor-19 elementor-location-header"
-      data-elementor-post-type="elementor_library"
-    >
-      <div
-        className="elementor-element elementor-element-a7a6507 e-flex e-con-boxed e-con e-parent"
-        data-id="a7a6507"
-        data-element_type="container"
-        data-settings='{"background_background":"gradient","sticky":"top","sticky_on":["desktop","tablet","mobile"],"sticky_offset":0,"sticky_effects_offset":0,"sticky_anchor_link_offset":0}'
-      >
-        <div className="e-con-inner">
-          <div
-            className="elementor-element elementor-element-6afe1ec elementor-widget-mobile__width-initial elementor-widget elementor-widget-image"
-            data-id="6afe1ec"
-            data-element_type="widget"
-            data-widget_type="image.default"
+    <header className="native-site-header">
+      <div className="native-site-header__bar">
+        <Link href="/" className="native-site-header__brand" aria-label="Biomasa Portal">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/wp-content/uploads/2024/01/biomasaportal.png"
+            alt="Biomasa Portal"
+            width={200}
+            height={200}
+            loading="eager"
+            fetchPriority="high"
+          />
+        </Link>
+
+        <nav className="native-site-header__nav" aria-label="Główne menu">
+          <Link
+            href="/ogloszenia/"
+            className={`native-site-header__nav-link${isActivePath(pathname, "/ogloszenia") ? " is-active" : ""}`}
           >
-            <Link href="/">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                width={200}
-                height={200}
-                src="/wp-content/uploads/2024/01/biomasaportal.png"
-                className="attachment-full size-full wp-image-63"
-                alt="biomasa portal"
-                decoding="async"
-                loading="eager"
-                fetchPriority="high"
-              />
-            </Link>
-          </div>
+            Ogłoszenia
+          </Link>
+          <span className="native-site-header__divider" aria-hidden="true">
+            |
+          </span>
+          <MegaMenu />
+        </nav>
 
-          <div
-            className="elementor-element elementor-element-7c738ef elementor-widget elementor-widget-off-canvas"
-            data-id="7c738ef"
-            data-element_type="widget"
-            data-settings='{"entrance_animation_mobile":"fadeInRight","exit_animation_mobile":"fadeInRight"}'
-            data-widget_type="off-canvas.default"
-          >
-            <div
-              id="off-canvas-native-preview"
-              className="e-off-canvas"
-              role="dialog"
-              aria-hidden="true"
-              aria-label="Menu"
-              aria-modal={true}
-              inert
-              data-delay-child-handlers="true"
-            >
-              <div className="e-off-canvas__overlay" />
-              <div className="e-off-canvas__main">
-                <div className="e-off-canvas__content">
-                  <div
-                    className="elementor-element elementor-element-d1fefb1 e-con-full e-flex e-con e-child"
-                    data-id="d1fefb1"
-                    data-element_type="container"
-                    data-settings='{"background_background":"classic"}'
-                  >
-                    <div
-                      className="elementor-element elementor-element-7a83f10 e-flex e-con-boxed e-con e-child"
-                      data-id="7a83f10"
-                      data-element_type="container"
-                    >
-                      <div className="e-con-inner">
-                        <div
-                          className="elementor-element elementor-element-e793591 elementor-widget-mobile__width-initial elementor-widget elementor-widget-image"
-                          data-id="e793591"
-                          data-element_type="widget"
-                          data-widget_type="image.default"
-                        >
-                          <Link href="/">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              width={200}
-                              height={200}
-                              src="/wp-content/uploads/2024/01/biomasaportal.png"
-                              className="attachment-full size-full wp-image-63"
-                              alt="biomasa portal"
-                              decoding="async"
-                              loading="lazy"
-                            />
-                          </Link>
-                        </div>
-                        <div
-                          className="elementor-element elementor-element-d65f516 elementor-view-default elementor-widget elementor-widget-icon"
-                          data-id="d65f516"
-                          data-element_type="widget"
-                          data-widget_type="icon.default"
-                        >
-                          <div className="elementor-icon-wrapper">
-                            <button
-                              type="button"
-                              className="elementor-icon e-off-canvas__close"
-                              aria-label="Zamknij menu"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      className="elementor-element elementor-element-725e682 e-flex e-con-boxed e-con e-child"
-                      data-id="725e682"
-                      data-element_type="container"
-                    >
-                      <div className="e-con-inner">
-                        <div
-                          className="elementor-element elementor-element-2e0c14e elementor-widget elementor-widget-button"
-                          data-id="2e0c14e"
-                          data-element_type="widget"
-                          data-settings='{"_animation":"fadeInUp"}'
-                          data-widget_type="button.default"
-                        >
-                          <Link
-                            className="elementor-button elementor-button-link elementor-size-sm"
-                            href="/dodaj-ogloszenie/"
-                          >
-                            <span className="elementor-button-content-wrapper">
-                              <span className="elementor-button-text">Dodaj ogłoszenie</span>
-                            </span>
-                          </Link>
-                        </div>
-                        <div
-                          className="elementor-element elementor-element-d2e1808 elementor-widget elementor-widget-button"
-                          data-id="d2e1808"
-                          data-element_type="widget"
-                          data-settings='{"_animation":"fadeInUp"}'
-                          data-widget_type="button.default"
-                        >
-                          <Link
-                            className="elementor-button elementor-button-link elementor-size-sm"
-                            href="/zaloz-konto/"
-                          >
-                            <span className="elementor-button-content-wrapper">
-                              <span className="elementor-button-text">Załóż konto</span>
-                            </span>
-                          </Link>
-                        </div>
-                        <div
-                          className="elementor-element elementor-element-codexlogin elementor-widget elementor-widget-button"
-                          data-id="codexlogin"
-                          data-element_type="widget"
-                          data-settings='{"_animation":"fadeInUp"}'
-                          data-widget_type="button.default"
-                        >
-                          <Link
-                            className="elementor-button elementor-button-link elementor-size-sm"
-                            href="/zaloguj-sie/"
-                          >
-                            <span className="elementor-button-content-wrapper">
-                              <span className="elementor-button-text">Zaloguj się</span>
-                            </span>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      className="elementor-element elementor-element-2c37977 elementor-widget elementor-widget-nav-menu"
-                      data-id="2c37977"
-                      data-element_type="widget"
-                      data-settings='{"submenu_icon":{"value":"<i aria-hidden=\"true\" class=\"\"></i>","library":""},"layout":"dropdown"}'
-                      data-widget_type="nav-menu.default"
-                    >
-                      <nav className="elementor-nav-menu--dropdown elementor-nav-menu__container" aria-hidden="true">
-                        <ul className="elementor-nav-menu">
-                          <li className="menu-item">
-                            <Link href="/ogloszenia/" className="elementor-item" tabIndex={-1}>
-                              Ogłoszenia
-                            </Link>
-                          </li>
-                          <MegaMenu />
-                          <li className="menu-item">
-                            <Link href="/wpisy/" className="elementor-item" tabIndex={-1}>
-                              Wpisy
-                            </Link>
-                          </li>
-                        </ul>
-                      </nav>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="elementor-widget-container">
-              <button
-                type="button"
-                className="elementor-menu-toggle"
-                aria-controls="off-canvas-native-preview"
-                aria-label="Otwórz menu"
-              >
-                <span className="elementor-screen-only">Menu</span>
-                <svg
-                  aria-hidden="true"
-                  className="e-font-icon-svg e-eicon-menu-bar"
-                  viewBox="0 0 1000 1000"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M209 166h582c19 0 35 16 35 35s-16 35-35 35H209c-19 0-35-16-35-35s16-35 35-35zm582 264H209c-19 0-35 16-35 35s16 35 35 35h582c19 0 35-16 35-35s-16-35-35-35zm0 264H209c-19 0-35 16-35 35s16 35 35 35h582c19 0 35-16 35-35s-16-35-35-35z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div
-            className="elementor-element elementor-element-2d3dc09 elementor-nav-menu__align-justify elementor-nav-menu--dropdown-mobile elementor-nav-menu--stretch elementor-nav-menu__text-align-center elementor-hidden-tablet elementor-hidden-mobile elementor-widget elementor-widget-nav-menu"
-            data-id="2d3dc09"
-            data-element_type="widget"
-            data-settings='{"layout":"horizontal","submenu_icon":{"value":"<i aria-hidden=\"true\" class=\"fas fa-caret-down\"></i>","library":"fa-solid"}}'
-            data-widget_type="nav-menu.default"
-          >
-            <div className="elementor-widget-container">
-              <nav className="elementor-nav-menu--main elementor-nav-menu__container" aria-label="Menu">
-                <ul className="elementor-nav-menu">
-                  <li className="menu-item">
-                    <Link href="/ogloszenia/" className="elementor-item">
-                      Ogłoszenia
-                    </Link>
-                  </li>
-                  <MegaMenu />
-                </ul>
-              </nav>
-            </div>
-          </div>
-
-          <div
-            className="elementor-element elementor-element-18fa858 elementor-hidden-tablet elementor-hidden-mobile elementor-widget elementor-widget-button"
-            data-id="18fa858"
-            data-element_type="widget"
-            data-settings='{"_animation":"fadeInUp"}'
-            data-widget_type="button.default"
-          >
-            <div className="elementor-widget-container">
-              <div className="elementor-button-wrapper">
-                <Link
-                  className="elementor-button elementor-button-link elementor-size-sm"
-                  href="/dodaj-ogloszenie/"
-                >
-                  <span className="elementor-button-content-wrapper">
-                    <span className="elementor-button-text">Dodaj ogłoszenie</span>
-                  </span>
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="elementor-element elementor-element-322c0ea elementor-hidden-tablet elementor-hidden-mobile elementor-widget elementor-widget-button"
-            data-id="322c0ea"
-            data-element_type="widget"
-            data-settings='{"_animation":"fadeInUp"}'
-            data-widget_type="button.default"
-          >
-            <div className="elementor-widget-container">
-              <div className="elementor-button-wrapper">
-                <Link
-                  className="elementor-button elementor-button-link elementor-size-sm"
-                  href="/zaloz-konto/"
-                >
-                  <span className="elementor-button-content-wrapper">
-                    <span className="elementor-button-text">Załóż konto</span>
-                  </span>
-                </Link>
-              </div>
-            </div>
-          </div>
+        <div className="native-site-header__actions">
+          <Link href="/dodaj-ogloszenie/" className="native-site-header__button is-primary">
+            Dodaj ogłoszenie
+          </Link>
+          <Link href="/zaloz-konto/" className="native-site-header__button is-secondary">
+            Załóż konto
+          </Link>
         </div>
+
+        <button
+          type="button"
+          className="native-site-header__toggle"
+          aria-expanded={isOpen}
+          aria-controls="native-site-mobile-menu"
+          aria-label={isOpen ? "Zamknij menu" : "Otwórz menu"}
+          onClick={() => setIsOpen((value) => !value)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+      </div>
+
+      <div
+        className={`native-site-header__mobile-overlay${isOpen ? " is-open" : ""}`}
+        onClick={() => setIsOpen(false)}
+      />
+
+      <div
+        id="native-site-mobile-menu"
+        className={`native-site-header__mobile-panel${isOpen ? " is-open" : ""}`}
+        aria-hidden={!isOpen}
+      >
+        <div className="native-site-header__mobile-head">
+          <Link href="/" className="native-site-header__brand" onClick={() => setIsOpen(false)}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/wp-content/uploads/2024/01/biomasaportal.png"
+              alt="Biomasa Portal"
+              width={200}
+              height={200}
+              loading="lazy"
+            />
+          </Link>
+          <button
+            type="button"
+            className="native-site-header__mobile-close"
+            aria-label="Zamknij menu"
+            onClick={() => setIsOpen(false)}
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="native-site-header__mobile-actions">
+          <Link href="/dodaj-ogloszenie/" className="native-site-header__button is-primary" onClick={() => setIsOpen(false)}>
+            Dodaj ogłoszenie
+          </Link>
+          <Link href="/zaloguj-sie/" className="native-site-header__button is-secondary" onClick={() => setIsOpen(false)}>
+            Zaloguj się
+          </Link>
+          <Link href="/zaloz-konto/" className="native-site-header__button is-tertiary" onClick={() => setIsOpen(false)}>
+            Załóż konto
+          </Link>
+        </div>
+
+        <nav className="native-site-header__mobile-nav" aria-label="Mobilne menu">
+          <Link href="/ogloszenia/" onClick={() => setIsOpen(false)}>
+            Ogłoszenia
+          </Link>
+          <Link href="/biomasa-w-polsce/" onClick={() => setIsOpen(false)}>
+            Biomasa w Polsce
+          </Link>
+          <Link href="/wpisy/" onClick={() => setIsOpen(false)}>
+            Wpisy
+          </Link>
+          <Link href="/moje-ogloszenia/" onClick={() => setIsOpen(false)}>
+            Moje ogłoszenia
+          </Link>
+        </nav>
+
+        <MobileClusterLinks onNavigate={() => setIsOpen(false)} />
       </div>
     </header>
   );
