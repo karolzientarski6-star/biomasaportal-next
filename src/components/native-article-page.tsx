@@ -52,6 +52,19 @@ type ArticleRenderModel = {
   frameRoute: ExportedRoute | null;
 };
 
+function buildFeaturedOverlayStyle(featuredImage: string | null) {
+  if (!featuredImage) {
+    return undefined;
+  }
+
+  return {
+    backgroundImage: `linear-gradient(rgba(11, 25, 19, 0.58), rgba(11, 25, 19, 0.58)), url("${featuredImage}")`,
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    backgroundSize: "cover",
+  } as const;
+}
+
 function stripSiteSuffix(title: string) {
   return title.replace(/\s*-\s*BiomasaPortal\s*$/i, "").trim();
 }
@@ -340,7 +353,10 @@ export async function NativeArticlePage({
             <div className="editorial-post-main">
               {model.tocItems.length ? (
                 <section className="elementor-widget elementor-widget-table-of-contents native-article-page__toc">
-                  <div className="elementor-widget-container">
+                  <div
+                    className="elementor-widget-container"
+                    style={buildFeaturedOverlayStyle(model.featuredImage)}
+                  >
                     <div className="elementor-toc__header">
                       <h2 className="elementor-toc__header-title">Spis treści</h2>
                     </div>
@@ -373,15 +389,17 @@ export async function NativeArticlePage({
                     <h2>Najczęściej zadawane pytania</h2>
                     <div className="faq-list">
                       {model.faqEntries.map((entry) => (
-                        <div key={entry.question} className="faq-item">
-                          <div className="faq-question">{entry.question}</div>
+                        <details key={entry.question} className="faq-item">
+                          <summary className="faq-question">
+                            <span>{entry.question}</span>
+                          </summary>
                           <div
                             className="faq-answer"
                             dangerouslySetInnerHTML={{
                               __html: renderFaqAnswerHtml(entry.answerHtml),
                             }}
                           />
-                        </div>
+                        </details>
                       ))}
                     </div>
                   </section>

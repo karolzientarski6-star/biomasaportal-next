@@ -315,18 +315,26 @@ function resolveEditorialUploadUrl(
   url: string | null | undefined,
   hints: string[] = [],
 ) {
+  const candidates = rankEditorialUploadCandidates(url, hints);
+  return candidates[0] ?? (url ?? null);
+}
+
+function rankEditorialUploadCandidates(
+  url: string | null | undefined,
+  hints: string[] = [],
+) {
   if (!url) {
-    return null;
+    return [] as string[];
   }
 
   const relativeUploadUrl = toRelativeUploadUrl(url);
 
   if (!relativeUploadUrl) {
-    return url;
+    return [url];
   }
 
   if (getUploadImageIndex().some((entry) => entry.relativeUrl === relativeUploadUrl)) {
-    return relativeUploadUrl;
+    return [relativeUploadUrl];
   }
 
   const desiredBaseName = normalizeTextForMatch(
@@ -338,26 +346,24 @@ function resolveEditorialUploadUrl(
     /^\/wp-content\/uploads\/\d{4}\/\d{2}\//,
   );
   const preferredFolderPrefix = folderPrefixMatch?.[0] ?? null;
-
-  let bestMatch: UploadImageEntry | null = null;
-  let bestScore = 0;
+  const scoredMatches: Array<{ entry: UploadImageEntry; score: number }> = [];
 
   for (const entry of getUploadImageIndex()) {
     let score = 0;
 
     if (entry.normalizedBaseName === desiredBaseName) {
-      return entry.relativeUrl;
+      return [entry.relativeUrl];
     }
 
     for (const token of desiredTokens) {
       if (entry.tokens.has(token)) {
-        score += 5;
+        score += 2;
       }
     }
 
     for (const token of hintTokens) {
       if (entry.tokens.has(token)) {
-        score += 2;
+        score += 5;
       }
     }
 
@@ -369,28 +375,87 @@ function resolveEditorialUploadUrl(
       score += 2;
     }
 
-    if (
-      score > bestScore ||
-      (score === bestScore &&
-        bestMatch &&
-        (entry.depth < bestMatch.depth ||
-          (entry.depth === bestMatch.depth &&
-            entry.relativeUrl.length < bestMatch.relativeUrl.length)))
-    ) {
-      bestMatch = entry;
-      bestScore = score;
+    if (score > 0) {
+      scoredMatches.push({ entry, score });
     }
   }
 
-  if (bestMatch && bestScore >= 4) {
-    return bestMatch.relativeUrl;
+  scoredMatches.sort((left, right) => {
+    if (right.score !== left.score) {
+      return right.score - left.score;
+    }
+
+    if (left.entry.depth !== right.entry.depth) {
+      return left.entry.depth - right.entry.depth;
+    }
+
+    return left.entry.relativeUrl.length - right.entry.relativeUrl.length;
+  });
+
+  const uniqueMatches = Array.from(
+    new Set(
+      scoredMatches
+        .filter((match) => match.score >= 4)
+        .map((match) => match.entry.relativeUrl),
+    ),
+  );
+
+  if (uniqueMatches.length) {
+    return uniqueMatches;
   }
 
-  return relativeUploadUrl;
+  return [relativeUploadUrl];
+}
+
+function collectEditorialImageHints(
+  $: ReturnType<typeof load>,
+  image: ReturnType<ReturnType<typeof load>>,
+  globalHints: string[],
+) {
+  const hints = [...globalHints];
+  const alt = image.attr("alt")?.trim();
+  const title = image.attr("title")?.trim();
+
+  if (alt) {
+    hints.unshift(alt);
+  }
+
+  if (title) {
+    hints.unshift(title);
+  }
+
+  const contentRow = image.closest(".content-row");
+
+  if (contentRow.length) {
+    const localHeading = contentRow.prevAll("h2, h3").first().text().trim();
+    const localText = contentRow
+      .find(".text-col")
+      .first()
+      .text()
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (localHeading) {
+      hints.unshift(localHeading);
+    }
+
+    if (localText) {
+      hints.unshift(localText.slice(0, 260));
+    }
+  }
+
+  const figureCaption = image.closest("figure").find("figcaption").first().text().trim();
+
+  if (figureCaption) {
+    hints.unshift(figureCaption);
+  }
+
+  return Array.from(new Set(hints.filter(Boolean)));
 }
 
 export function sanitizeEditorialHtml(html: string, hints: string[] = []) {
   const $ = load(html || "");
+  const usedResolvedSources = new Set<string>();
   $("script").remove();
 
   // The AI-generated HTML starts with an <h1> that duplicates the article title
@@ -404,9 +469,18 @@ export function sanitizeEditorialHtml(html: string, hints: string[] = []) {
 
     // Normalize absolute WP URLs → relative so Vercel serves them from /public/
     const src = image.attr("src");
-    const resolvedSrc = resolveEditorialUploadUrl(src, hints);
+    const relativeSource = toRelativeUploadUrl(src);
+    const localHints = collectEditorialImageHints($, image, hints);
+    const resolvedCandidates = rankEditorialUploadCandidates(src, localHints);
+    const resolvedSrc =
+      resolvedCandidates.find(
+        (candidate) => !usedResolvedSources.has(candidate) || candidate === relativeSource,
+      ) ??
+      resolvedCandidates[0] ??
+      null;
     if (resolvedSrc) {
       image.attr("src", resolvedSrc);
+      usedResolvedSources.add(resolvedSrc);
     }
 
     // Strip srcset for WP images — resized variants don't exist in /public/
