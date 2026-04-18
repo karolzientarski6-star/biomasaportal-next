@@ -10,7 +10,6 @@ import { NativePreviewFooter } from "@/components/native-preview-footer";
 import { NativePreviewHeader } from "@/components/native-preview-header";
 import { WordPressAssets } from "@/components/wordpress-assets";
 import { WordPressBodyClass } from "@/components/wordpress-body-class";
-import { WordPressInteractiveEnhancer } from "@/components/wordpress-interactive-enhancer";
 import { WordPressSeoScripts } from "@/components/wordpress-seo-scripts";
 import { getCombinedBlogIndex } from "@/lib/blog-index";
 import { extractElementorPostsWidgetSignatures } from "@/lib/elementor-posts-widget";
@@ -45,7 +44,6 @@ export async function NativeHomePage({ route }: NativeHomePageProps) {
       <WordPressBodyClass className={route.bodyClass} />
       <WordPressAssets stylesheets={filterNativeChromeStylesheets(route.stylesheets)} />
       <WordPressSeoScripts schemaJsonLd={route.schemaJsonLd} />
-      <WordPressInteractiveEnhancer path="/" />
       <div
         className={`wp-mirror-page native-preview-home${route.bodyClass.includes("single-post") ? " wp-mirror-page--single-post" : ""}`}
         style={

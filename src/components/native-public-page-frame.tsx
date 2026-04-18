@@ -3,7 +3,6 @@ import { NativePreviewFooter } from "@/components/native-preview-footer";
 import { NativePreviewHeader } from "@/components/native-preview-header";
 import { WordPressAssets } from "@/components/wordpress-assets";
 import { WordPressBodyClass } from "@/components/wordpress-body-class";
-import { WordPressInteractiveEnhancer } from "@/components/wordpress-interactive-enhancer";
 import { WordPressSeoScripts } from "@/components/wordpress-seo-scripts";
 import type { ExportedRoute } from "@/lib/wordpress-export";
 
@@ -51,7 +50,6 @@ export function NativePublicPageFrame({
       <WordPressBodyClass className={bodyClass} />
       <WordPressAssets stylesheets={stylesheets} />
       <WordPressSeoScripts schemaJsonLd={schemaJsonLd} />
-      <WordPressInteractiveEnhancer path={path} />
       <div
         className={`wp-mirror-page native-public-page${singlePost ? " wp-mirror-page--single-post" : ""}`}
         style={
