@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { EditorialArticlePage } from "@/components/editorial-article-page";
 import { MirrorPage } from "@/components/mirror-page";
+import { NativeArticlePage } from "@/components/native-article-page";
 import {
   buildEditorialArticleMetadata,
   getEditorialArticleByPath,
@@ -42,13 +42,19 @@ export default async function CatchAllPage({ params }: CatchAllProps) {
   const route = await getRouteByPath(path);
 
   if (route) {
+    if (route.bodyClass.includes("single-post")) {
+      return <NativeArticlePage path={path} route={route} />;
+    }
+
     return <MirrorPage path={path} route={route} />;
   }
 
   const editorialArticle = await getEditorialArticleByPath(path);
 
   if (editorialArticle?.publicationStatus === "published") {
-    return <EditorialArticlePage path={path} />;
+    return (
+      <NativeArticlePage path={path} editorialArticle={editorialArticle} />
+    );
   }
 
   notFound();

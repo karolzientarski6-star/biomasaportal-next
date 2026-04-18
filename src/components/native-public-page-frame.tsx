@@ -9,27 +9,43 @@ import type { ExportedRoute } from "@/lib/wordpress-export";
 
 type NativePublicPageFrameProps = {
   path: string;
-  route: ExportedRoute;
+  route?: ExportedRoute | null;
+  bodyClass?: string;
+  stylesheets?: string[];
+  schemaJsonLd?: string[];
+  featuredImage?: string | null;
+  isSinglePost?: boolean;
   children: React.ReactNode;
 };
 
 export function NativePublicPageFrame({
   path,
   route,
+  bodyClass: providedBodyClass,
+  stylesheets: providedStylesheets,
+  schemaJsonLd: providedSchemaJsonLd,
+  featuredImage,
+  isSinglePost = false,
   children,
 }: NativePublicPageFrameProps) {
+  const bodyClass = providedBodyClass ?? route?.bodyClass ?? "";
+  const stylesheets = providedStylesheets ?? route?.stylesheets ?? [];
+  const schemaJsonLd = providedSchemaJsonLd ?? route?.schemaJsonLd ?? [];
+  const openGraphImage = featuredImage ?? route?.openGraph.image ?? null;
+  const singlePost = isSinglePost || bodyClass.includes("single-post");
+
   return (
     <>
-      <WordPressBodyClass className={route.bodyClass} />
-      <WordPressAssets stylesheets={route.stylesheets} />
-      <WordPressSeoScripts schemaJsonLd={route.schemaJsonLd} />
+      <WordPressBodyClass className={bodyClass} />
+      <WordPressAssets stylesheets={stylesheets} />
+      <WordPressSeoScripts schemaJsonLd={schemaJsonLd} />
       <WordPressInteractiveEnhancer path={path} />
       <div
-        className={`wp-mirror-page native-public-page${route.bodyClass.includes("single-post") ? " wp-mirror-page--single-post" : ""}`}
+        className={`wp-mirror-page native-public-page${singlePost ? " wp-mirror-page--single-post" : ""}`}
         style={
-          route.openGraph.image
+          openGraphImage
             ? ({
-                ["--wp-featured-image" as string]: `url("${route.openGraph.image}")`,
+                ["--wp-featured-image" as string]: `url("${openGraphImage}")`,
               } as CSSProperties)
             : undefined
         }
