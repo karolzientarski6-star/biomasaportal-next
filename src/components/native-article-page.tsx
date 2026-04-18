@@ -133,6 +133,7 @@ function sanitizeArticleHtml(html: string) {
   const $ = load(`<div class="native-article-html-root">${html}</div>`);
 
   $("script, style").remove();
+  $(".native-article-html-root h1").remove();
   $(".faq-container, .faq-section").remove();
 
   $(".faq-item").each((_, element) => {
@@ -334,18 +335,11 @@ export async function NativeArticlePage({
       isSinglePost
     >
       <article className="editorial-single-post native-article-page">
-        <header className="native-article-page__hero native-article-page__hero--bleed">
-          <div className="native-article-page__hero-inner">
-            <p className="native-article-page__eyebrow">{model.categoryLabel}</p>
-            <h1>{model.title}</h1>
-            {model.intro ? (
-              <p className="native-article-page__intro">{model.intro}</p>
-            ) : null}
-            <div className="editorial-post-meta native-article-page__meta">
-              {model.publishedAtLabel ? <span>{model.publishedAtLabel}</span> : null}
-              <span>BiomasaPortal</span>
-            </div>
-          </div>
+        <header
+          className="native-article-page__hero native-article-page__hero--bleed"
+          aria-hidden="true"
+        >
+          <div className="native-article-page__hero-inner native-article-page__hero-inner--empty" />
         </header>
 
         <section className="editorial-post-layout native-article-page__layout native-article-page__container">
@@ -379,6 +373,16 @@ export async function NativeArticlePage({
               ) : null}
 
               <div className="native-article-page__content">
+                <header className="native-article-page__content-header">
+                  <p className="native-article-page__eyebrow native-article-page__eyebrow--content">
+                    {model.categoryLabel}
+                  </p>
+                  <h1>{model.title}</h1>
+                  <div className="editorial-post-meta native-article-page__meta native-article-page__meta--content">
+                    {model.publishedAtLabel ? <span>{model.publishedAtLabel}</span> : null}
+                    <span>BiomasaPortal</span>
+                  </div>
+                </header>
                 <div
                   className="native-article-page__content-html"
                   dangerouslySetInnerHTML={{ __html: model.htmlContent }}
