@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BlogArchiveGrid } from "@/components/blog-archive-grid";
-import { MirrorTemplatePage } from "@/components/mirror-template-page";
+import { NativeBlogArchivePage } from "@/components/native-blog-archive-page";
 import { extractElementorPostsWidgetSignatures } from "@/lib/elementor-posts-widget";
 import { buildEditorialArchiveMetadata } from "@/lib/editorial";
 import { getCombinedBlogIndex } from "@/lib/blog-index";
@@ -64,26 +63,16 @@ export default async function BlogArchivePaginationPage({
     extractElementorPostsWidgetSignatures(templateRoute.html)[0] ?? null;
 
   return (
-    <MirrorTemplatePage
+    <NativeBlogArchivePage
       path={`/wpisy/page/${page}/`}
       route={templateRoute}
-      slots={[
-        {
-          selector: ".elementor-widget-posts",
-          slotId: "blog-archive-grid",
-          node: (
-            <BlogArchiveGrid
-              items={items}
-              currentPage={page}
-              perPage={POSTS_PER_PAGE}
-              basePath="/wpisy/"
-              widgetSignature={mainWidgetSignature}
-              showSummary={false}
-              contained
-            />
-          ),
-        },
-      ]}
+      title={`Wpisy - strona ${page}`}
+      intro="Kolejna strona archiwum wpisow BiomasaPortal o biomasie, pellecie, maszynach lesnych i dofinansowaniach."
+      items={items}
+      currentPage={page}
+      perPage={POSTS_PER_PAGE}
+      basePath="/wpisy/"
+      widgetSignature={mainWidgetSignature}
     />
   );
 }
