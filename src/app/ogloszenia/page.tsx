@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { MirrorPage } from "@/components/mirror-page";
+import { ClassifiedArchive } from "@/components/classified-archive";
 import { getRouteMetadata } from "@/lib/wordpress-export";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -7,5 +7,5 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function ClassifiedArchivePage() {
-  return <MirrorPage path="/ogloszenia/" />;
+  return <ClassifiedArchive />;
 }

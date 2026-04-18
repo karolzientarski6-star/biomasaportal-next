@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { MirrorPage } from "@/components/mirror-page";
-import { buildRouteMetadata, getRouteByPath } from "@/lib/wordpress-export";
+import { NativeClassifiedPage } from "@/components/native-classified-page";
+import {
+  buildRouteMetadata,
+  getClassifieds,
+  getRouteByPath,
+} from "@/lib/wordpress-export";
 
 type ClassifiedSingleProps = {
   params: Promise<{ slug: string }>;
@@ -24,11 +28,15 @@ export default async function ClassifiedSinglePage({
   params,
 }: ClassifiedSingleProps) {
   const { slug } = await params;
-  const route = await getRouteByPath(`/ogloszenia/${slug}/`);
+  const [route, classifieds] = await Promise.all([
+    getRouteByPath(`/ogloszenia/${slug}/`),
+    getClassifieds(),
+  ]);
+  const item = classifieds.find((entry) => entry.slug === slug) ?? null;
 
-  if (!route) {
+  if (!route || !item) {
     notFound();
   }
 
-  return <MirrorPage path={route.path} route={route} />;
+  return <NativeClassifiedPage item={item} />;
 }
