@@ -1,13 +1,11 @@
 import type { CSSProperties } from "react";
 import {
-  NativeHomeAboutSection,
-  NativeHomeBrandSection,
-  NativeHomeCommunitySection,
   NativeHomeForestSection,
   NativeHomeHeroSection,
   NativeHomeLatestPostsSection,
   NativeHomePartnersSection,
 } from "@/components/native-home-sections";
+import { MirrorHtml } from "@/components/mirror-html";
 import { NativePreviewFooter } from "@/components/native-preview-footer";
 import { NativePreviewHeader } from "@/components/native-preview-header";
 import { WordPressAssets } from "@/components/wordpress-assets";
@@ -80,20 +78,9 @@ export async function NativeHomePage({ route }: NativeHomePageProps) {
             items={latestItems}
             widgetSignature={widgetSignature}
           />
-          <NativeHomeCommunitySection
-            title={homeData.communityTitle}
-            primaryButtonHref={homeData.communityPrimaryButtonHref}
-            primaryButtonLabel={homeData.communityPrimaryButtonLabel}
-            secondaryTitle={homeData.communitySecondaryTitle}
-            secondaryButtonHref={homeData.communitySecondaryButtonHref}
-            secondaryButtonLabel={homeData.communitySecondaryButtonLabel}
-          />
-          <NativeHomeAboutSection
-            title={homeData.aboutTitle}
-            logo={homeData.aboutLogo}
-            paragraphs={homeData.aboutParagraphs}
-          />
-          <NativeHomeBrandSection title={homeData.brandTitle} />
+          <MirrorHtml html={homeData.communityHtml} />
+          <MirrorHtml html={homeData.aboutHtml} />
+          <MirrorHtml html={homeData.brandHtml} />
           <NativeHomePartnersSection
             title={homeData.partnersTitle}
             logo={homeData.partnersLogo}
