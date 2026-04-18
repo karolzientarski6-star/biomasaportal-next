@@ -1391,9 +1391,9 @@ img {
 }
 
 .native-article-page {
-  width: min(1180px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 40px 0 72px;
+  width: 100%;
+  margin: 0;
+  padding: 0 0 72px;
   display: grid;
   gap: 30px;
 }
@@ -1412,6 +1412,23 @@ img {
   background-size: cover;
   color: #fff;
   box-shadow: 0 28px 56px rgba(18, 42, 31, 0.22);
+}
+
+.native-article-page__hero--bleed {
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.native-article-page__hero-inner,
+.native-article-page__container {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.native-article-page__container {
+  padding-top: 8px;
 }
 
 .native-article-page__eyebrow {
@@ -1542,9 +1559,58 @@ img {
   order: initial !important;
 }
 
-.native-article-page__sidebar .elementor-widget-table-of-contents,
+.native-article-page__toc,
 .native-article-page__sidebar .editorial-sidebar-posts {
   order: initial !important;
+}
+
+.native-article-page__toc {
+  margin-bottom: 24px;
+}
+
+.native-article-page__toc.elementor-widget-table-of-contents {
+  position: static;
+  top: auto;
+}
+
+.native-article-page__faq {
+  margin-top: 34px;
+}
+
+.native-public-page header.elementor-location-header .e-con-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.native-public-page header.elementor-location-header .elementor-nav-menu--main .elementor-nav-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: nowrap;
+}
+
+.native-public-page header.elementor-location-header .elementor-nav-menu--main .menu-item {
+  flex: 0 0 auto;
+}
+
+.native-public-page header.elementor-location-header .elementor-menu-toggle {
+  display: none;
+}
+
+.native-public-page header.elementor-location-header .elementor-element-7c738ef {
+  display: none;
+}
+
+.native-public-page header.elementor-location-header .elementor-element-2d3dc09 {
+  display: block;
+  flex: 1 1 auto;
+}
+
+.native-public-page header.elementor-location-header .elementor-element-18fa858 {
+  flex: 0 0 auto;
 }
 
 .native-blog-archive-page__intro {
@@ -2516,6 +2582,23 @@ img {
   .biomasa-category-grid,
   .editorial-hub-post-grid {
     grid-template-columns: 1fr;
+  }
+
+  .native-public-page header.elementor-location-header .elementor-element-7c738ef {
+    display: block;
+  }
+
+  .native-public-page header.elementor-location-header .elementor-menu-toggle {
+    display: inline-flex;
+  }
+
+  .native-public-page header.elementor-location-header .elementor-element-2d3dc09 {
+    display: none;
+  }
+
+  .native-article-page__hero-inner,
+  .native-article-page__container {
+    width: min(100%, calc(100% - 20px));
   }
 }
 

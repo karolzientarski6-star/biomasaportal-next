@@ -27,13 +27,24 @@ type NativeArticlePageProps = {
   editorialArticle?: EditorialArticle | null;
 };
 
+type TocItem = {
+  id: string;
+  text: string;
+  level: 2 | 3;
+};
+
+type FaqEntry = {
+  question: string;
+  answerHtml: string;
+};
+
 type ArticleRenderModel = {
-  type: "wordpress" | "editorial";
   title: string;
   path: string;
   intro: string;
   htmlContent: string;
-  tocItems: Array<{ id: string; text: string; level: 2 | 3 }>;
+  tocItems: TocItem[];
+  faqEntries: FaqEntry[];
   categoryLabel: string;
   publishedAtLabel: string | null;
   featuredImage: string | null;
@@ -47,7 +58,7 @@ function stripSiteSuffix(title: string) {
 
 function cleanRelatedExcerpt(value: string) {
   return value
-    .replace(/^\s*spis\s+tre(?:Ĺ›|ś|s)ci\b[:\s-]*/i, "")
+    .replace(/^\s*spis\s+tre(?:s|ś|ci)\b[:\s-]*/i, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -105,35 +116,18 @@ function buildArticleSchema(article: EditorialArticle) {
   });
 }
 
-function buildFaqHtml(article: EditorialArticle) {
-  const entries = getEditorialFaqEntries(article.faqSchema);
-  if (!entries.length) {
-    return "";
-  }
-
-  const items = entries
-    .map(
-      (entry) =>
-        `<div class="faq-item"><div class="faq-question">${entry.question}</div><div class="faq-answer">${renderFaqAnswerHtml(entry.answerHtml)}</div></div>`,
-    )
-    .join("");
-
-  return `<section class="faq-section"><h2>Najczesciej zadawane pytania</h2><div class="faq-list">${items}</div></section>`;
-}
-
 function sanitizeArticleHtml(html: string) {
   const $ = load(`<div class="native-article-html-root">${html}</div>`);
 
   $("script, style").remove();
-  $(".faq-container").remove();
-  $(".faq-section script").remove();
+  $(".faq-container, .faq-section").remove();
 
   $(".faq-item").each((_, element) => {
     const question = $(element).find(".faq-question").first();
     const answer = $(element).find(".faq-answer").first();
 
     if (question.length && answer.length) {
-      $(element).removeAttr("onclick");
+      $(element).remove();
     }
   });
 
@@ -141,9 +135,10 @@ function sanitizeArticleHtml(html: string) {
 }
 
 function buildArticleContentModel(html: string) {
-  const $ = load(`<div class="native-article-html-root">${sanitizeArticleHtml(html)}</div>`);
+  const sanitizedHtml = sanitizeArticleHtml(html);
+  const $ = load(`<div class="native-article-html-root">${sanitizedHtml}</div>`);
   const usedIds = new Set<string>();
-  const tocItems: Array<{ id: string; text: string; level: 2 | 3 }> = [];
+  const tocItems: TocItem[] = [];
 
   $(".native-article-html-root h2, .native-article-html-root h3").each((_, element) => {
     const heading = $(element);
@@ -166,7 +161,7 @@ function buildArticleContentModel(html: string) {
   });
 
   return {
-    htmlContent: $(".native-article-html-root").html() ?? sanitizeArticleHtml(html),
+    htmlContent: $(".native-article-html-root").html() ?? sanitizedHtml,
     tocItems,
   };
 }
@@ -210,16 +205,15 @@ function extractWordPressArticle(route: ExportedRoute): ArticleRenderModel {
       .find(Boolean)?.name ??
     schemaSections[0] ??
     "Biomasa";
-
   const contentModel = buildArticleContentModel(contentBlocks.join(""));
 
   return {
-    type: "wordpress",
     title,
     path: route.path,
     intro: intro || route.metaDescription || "",
     htmlContent: contentModel.htmlContent,
     tocItems: contentModel.tocItems,
+    faqEntries: [],
     categoryLabel,
     publishedAtLabel: formatPublishedDate(readSchemaTimestamp(route)),
     featuredImage: route.openGraph.image || null,
@@ -232,17 +226,16 @@ function extractEditorialArticle(
   article: EditorialArticle,
   frameRoute: ExportedRoute | null,
 ): ArticleRenderModel {
-  const contentModel = buildArticleContentModel(
-    `${article.htmlContent}${buildFaqHtml(article)}`,
-  );
+  const faqEntries = getEditorialFaqEntries(article.faqSchema);
+  const contentModel = buildArticleContentModel(article.htmlContent);
 
   return {
-    type: "editorial",
     title: article.title,
     path: article.path,
     intro: article.metaDescription,
     htmlContent: contentModel.htmlContent,
     tocItems: contentModel.tocItems,
+    faqEntries,
     categoryLabel: article.categoryName,
     publishedAtLabel: formatPublishedDate(
       article.publishedAt ?? article.scheduledFor ?? null,
@@ -263,24 +256,22 @@ function buildRelatedPosts(
 ) {
   const currentItem = items.find((item) => item.path === currentPath);
   const categorySlug = currentItem?.categorySlug ?? null;
+  const sameCategory = items.filter(
+    (item) => item.path !== currentPath && (!categorySlug || item.categorySlug === categorySlug),
+  );
+  const fallback = items.filter(
+    (item) =>
+      item.path !== currentPath &&
+      !sameCategory.some((candidate) => candidate.path === item.path),
+  );
 
-  return items
-    .filter((item) => item.path !== currentPath)
-    .filter((item) => {
-      if (!categorySlug) {
-        return true;
-      }
-
-      return item.categorySlug === categorySlug;
-    })
-    .slice(0, 4)
-    .map((item) => ({
-      ...item,
-      excerpt: cleanRelatedExcerpt(item.excerpt || item.title),
-      image:
-        getOptimizedWpImageUrl(item.image, 480) ||
-        getOptimizedWpImageByHints([item.title, item.path, categoryLabel], 480),
-    }));
+  return [...sameCategory, ...fallback].slice(0, 4).map((item) => ({
+    ...item,
+    excerpt: cleanRelatedExcerpt(item.excerpt || item.title),
+    image:
+      getOptimizedWpImageUrl(item.image, 480) ||
+      getOptimizedWpImageByHints([item.title, item.path, categoryLabel], 480),
+  }));
 }
 
 export async function NativeArticlePage({
@@ -330,47 +321,75 @@ export async function NativeArticlePage({
       isSinglePost
     >
       <article className="editorial-single-post native-article-page">
-        <header className="native-article-page__hero">
-          <p className="native-article-page__eyebrow">{model.categoryLabel}</p>
-          <h1>{model.title}</h1>
-          {model.intro ? <p className="native-article-page__intro">{model.intro}</p> : null}
-          <div className="editorial-post-meta native-article-page__meta">
-            {model.publishedAtLabel ? <span>{model.publishedAtLabel}</span> : null}
-            <span>BiomasaPortal</span>
+        <header className="native-article-page__hero native-article-page__hero--bleed">
+          <div className="native-article-page__hero-inner">
+            <p className="native-article-page__eyebrow">{model.categoryLabel}</p>
+            <h1>{model.title}</h1>
+            {model.intro ? (
+              <p className="native-article-page__intro">{model.intro}</p>
+            ) : null}
+            <div className="editorial-post-meta native-article-page__meta">
+              {model.publishedAtLabel ? <span>{model.publishedAtLabel}</span> : null}
+              <span>BiomasaPortal</span>
+            </div>
           </div>
         </header>
 
-        <section className="editorial-post-layout native-article-page__layout">
+        <section className="editorial-post-layout native-article-page__layout native-article-page__container">
           <div className="e-con-inner">
             <div className="editorial-post-main">
+              {model.tocItems.length ? (
+                <section className="elementor-widget elementor-widget-table-of-contents native-article-page__toc">
+                  <div className="elementor-widget-container">
+                    <div className="elementor-toc__header">
+                      <h2 className="elementor-toc__header-title">Spis treści</h2>
+                    </div>
+                    <div className="elementor-toc__body">
+                      <ol className="elementor-toc__list-wrapper">
+                        {model.tocItems.map((item) => (
+                          <li
+                            key={item.id}
+                            className={`elementor-toc__list-item elementor-toc__list-item--${item.level}`}
+                          >
+                            <a className="elementor-toc__list-item-text" href={`#${item.id}`}>
+                              {item.text}
+                            </a>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+
               <div className="native-article-page__content">
                 <div
                   className="native-article-page__content-html"
                   dangerouslySetInnerHTML={{ __html: model.htmlContent }}
                 />
+
+                {model.faqEntries.length ? (
+                  <section className="faq-section native-article-page__faq">
+                    <h2>Najczęściej zadawane pytania</h2>
+                    <div className="faq-list">
+                      {model.faqEntries.map((entry) => (
+                        <div key={entry.question} className="faq-item">
+                          <div className="faq-question">{entry.question}</div>
+                          <div
+                            className="faq-answer"
+                            dangerouslySetInnerHTML={{
+                              __html: renderFaqAnswerHtml(entry.answerHtml),
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
               </div>
             </div>
 
             <aside className="native-article-page__sidebar">
-              <section className="elementor-widget elementor-widget-table-of-contents">
-                <div className="elementor-widget-container">
-                  <div className="elementor-toc__header">
-                    <h2 className="elementor-toc__header-title">Spis treści</h2>
-                  </div>
-                  <div className="elementor-toc__body">
-                    <ol className="elementor-toc__list-wrapper">
-                      {model.tocItems.map((item) => (
-                        <li key={item.id} className={`elementor-toc__list-item elementor-toc__list-item--${item.level}`}>
-                          <a className="elementor-toc__list-item-text" href={`#${item.id}`}>
-                            {item.text}
-                          </a>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                </div>
-              </section>
-
               <section className="elementor-widget elementor-widget-posts editorial-sidebar-posts">
                 <h3>Pozostałe wpisy</h3>
                 <div className="elementor-posts-container" role="list">
