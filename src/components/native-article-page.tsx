@@ -47,6 +47,7 @@ type ArticleRenderModel = {
   faqEntries: FaqEntry[];
   categoryLabel: string;
   publishedAtLabel: string | null;
+  readingTimeLabel: string;
   featuredImage: string | null;
   schemaJsonLd: string[];
   frameRoute: ExportedRoute | null;
@@ -102,6 +103,13 @@ function formatPublishedDate(value: string | null | undefined) {
     month: "long",
     year: "numeric",
   }).format(date);
+}
+
+function estimateReadingTimeLabel(html: string) {
+  const text = load(`<div>${html}</div>`)("body").text().replace(/\s+/g, " ").trim();
+  const wordCount = text ? text.split(" ").filter(Boolean).length : 0;
+  const minutes = Math.max(1, Math.ceil(wordCount / 180));
+  return `${minutes} min czytania`;
 }
 
 function buildArticleSchema(article: EditorialArticle) {
@@ -230,6 +238,7 @@ function extractWordPressArticle(route: ExportedRoute): ArticleRenderModel {
     faqEntries: [],
     categoryLabel,
     publishedAtLabel: formatPublishedDate(readSchemaTimestamp(route)),
+    readingTimeLabel: estimateReadingTimeLabel(contentModel.htmlContent),
     featuredImage: route.openGraph.image || null,
     schemaJsonLd: route.schemaJsonLd,
     frameRoute: route,
@@ -254,6 +263,7 @@ function extractEditorialArticle(
     publishedAtLabel: formatPublishedDate(
       article.publishedAt ?? article.scheduledFor ?? null,
     ),
+    readingTimeLabel: estimateReadingTimeLabel(contentModel.htmlContent),
     featuredImage: article.heroImage,
     schemaJsonLd: [
       buildArticleSchema(article),
@@ -335,11 +345,15 @@ export async function NativeArticlePage({
       isSinglePost
     >
       <article className="editorial-single-post native-article-page">
-        <header
-          className="native-article-page__hero native-article-page__hero--bleed"
-          aria-hidden="true"
-        >
-          <div className="native-article-page__hero-inner native-article-page__hero-inner--empty" />
+        <header className="native-article-page__hero native-article-page__hero--bleed">
+          <div className="native-article-page__hero-inner native-article-page__hero-inner--compact">
+            <p className="native-article-page__eyebrow">{model.categoryLabel}</p>
+            <span className="native-article-page__hero-title">{model.title}</span>
+            <div className="editorial-post-meta native-article-page__meta">
+              {model.publishedAtLabel ? <span>{model.publishedAtLabel}</span> : null}
+              <span>{model.readingTimeLabel}</span>
+            </div>
+          </div>
         </header>
 
         <section className="editorial-post-layout native-article-page__layout native-article-page__container">
@@ -374,14 +388,7 @@ export async function NativeArticlePage({
 
               <div className="native-article-page__content">
                 <header className="native-article-page__content-header">
-                  <p className="native-article-page__eyebrow native-article-page__eyebrow--content">
-                    {model.categoryLabel}
-                  </p>
                   <h1>{model.title}</h1>
-                  <div className="editorial-post-meta native-article-page__meta native-article-page__meta--content">
-                    {model.publishedAtLabel ? <span>{model.publishedAtLabel}</span> : null}
-                    <span>BiomasaPortal</span>
-                  </div>
                 </header>
                 <div
                   className="native-article-page__content-html"

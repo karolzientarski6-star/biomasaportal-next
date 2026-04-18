@@ -265,11 +265,13 @@ function setupOffCanvas(root: ParentNode) {
 
   const openPanel = () => {
     offCanvas.setAttribute("aria-hidden", "false");
+    offCanvas.removeAttribute("inert");
     document.body.style.overflow = "hidden";
   };
 
   const closePanel = () => {
     offCanvas.setAttribute("aria-hidden", "true");
+    offCanvas.setAttribute("inert", "");
     document.body.style.overflow = "";
   };
 

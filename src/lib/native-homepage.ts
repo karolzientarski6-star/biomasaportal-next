@@ -35,13 +35,17 @@ export type NativeHomepageData = {
   communitySecondaryTitle: string;
   communitySecondaryButtonHref: string;
   communitySecondaryButtonLabel: string;
+  communityHtml: string;
   aboutTitle: string;
   aboutLogo: string | null;
   aboutParagraphs: string[];
+  aboutHtml: string;
   brandTitle: string;
+  brandHtml: string;
   partnersTitle: string;
   partnersLogo: string | null;
   partners: NativeHomePartnerLogo[];
+  partnersHtml: string;
 };
 
 export function extractNativeHomepageData(html: string): NativeHomepageData {
@@ -163,6 +167,8 @@ export function extractNativeHomepageData(html: string): NativeHomepageData {
       .text()
       .trim() || "Dołącz";
 
+  const communityHtml = raw$.html(communitySection) ?? "";
+
   const aboutTitle =
     aboutSection
       .find("[data-id='3e31e4f'] .elementor-heading-title")
@@ -179,12 +185,16 @@ export function extractNativeHomepageData(html: string): NativeHomepageData {
     .get()
     .filter(Boolean);
 
+  const aboutHtml = raw$.html(aboutSection) ?? "";
+
   const brandTitle =
     brandSection
       .find("[data-id='f0296bd'] .elementor-heading-title")
       .first()
       .text()
       .trim() || "BIOMASA PORTAL";
+
+  const brandHtml = raw$.html(brandSection) ?? "";
 
   const partnersTitle =
     partnersSection
@@ -209,6 +219,8 @@ export function extractNativeHomepageData(html: string): NativeHomepageData {
     })
     .get();
 
+  const partnersHtml = raw$.html(partnersSection) ?? "";
+
   return {
     pageRootClassName,
     pageRootDataProps,
@@ -227,12 +239,16 @@ export function extractNativeHomepageData(html: string): NativeHomepageData {
     communitySecondaryTitle,
     communitySecondaryButtonHref,
     communitySecondaryButtonLabel,
+    communityHtml,
     aboutTitle,
     aboutLogo,
     aboutParagraphs,
+    aboutHtml,
     brandTitle,
+    brandHtml,
     partnersTitle,
     partnersLogo,
     partners,
+    partnersHtml,
   };
 }

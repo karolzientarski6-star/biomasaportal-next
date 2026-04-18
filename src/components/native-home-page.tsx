@@ -1,12 +1,8 @@
 import type { CSSProperties } from "react";
 import {
-  NativeHomeAboutSection,
-  NativeHomeBrandSection,
-  NativeHomeCommunitySection,
   NativeHomeForestSection,
   NativeHomeHeroSection,
   NativeHomeLatestPostsSection,
-  NativeHomePartnersSection,
 } from "@/components/native-home-sections";
 import { NativePreviewFooter } from "@/components/native-preview-footer";
 import { NativePreviewHeader } from "@/components/native-preview-header";
@@ -70,25 +66,10 @@ export async function NativeHomePage({ route }: NativeHomePageProps) {
             items={latestItems}
             widgetSignature={widgetSignature}
           />
-          <NativeHomeCommunitySection
-            title={homeData.communityTitle}
-            primaryButtonHref={homeData.communityPrimaryButtonHref}
-            primaryButtonLabel={homeData.communityPrimaryButtonLabel}
-            secondaryTitle={homeData.communitySecondaryTitle}
-            secondaryButtonHref={homeData.communitySecondaryButtonHref}
-            secondaryButtonLabel={homeData.communitySecondaryButtonLabel}
-          />
-          <NativeHomeAboutSection
-            title={homeData.aboutTitle}
-            logo={homeData.aboutLogo}
-            paragraphs={homeData.aboutParagraphs}
-          />
-          <NativeHomeBrandSection title={homeData.brandTitle} />
-          <NativeHomePartnersSection
-            title={homeData.partnersTitle}
-            logo={homeData.partnersLogo}
-            partners={homeData.partners}
-          />
+          <div dangerouslySetInnerHTML={{ __html: homeData.communityHtml }} />
+          <div dangerouslySetInnerHTML={{ __html: homeData.aboutHtml }} />
+          <div dangerouslySetInnerHTML={{ __html: homeData.brandHtml }} />
+          <div dangerouslySetInnerHTML={{ __html: homeData.partnersHtml }} />
         </div>
         <NativePreviewFooter />
       </div>

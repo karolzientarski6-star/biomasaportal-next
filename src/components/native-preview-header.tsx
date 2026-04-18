@@ -170,6 +170,22 @@ export function NativePreviewHeader() {
                             </span>
                           </Link>
                         </div>
+                        <div
+                          className="elementor-element elementor-element-codexlogin elementor-widget elementor-widget-button"
+                          data-id="codexlogin"
+                          data-element_type="widget"
+                          data-settings='{"_animation":"fadeInUp"}'
+                          data-widget_type="button.default"
+                        >
+                          <Link
+                            className="elementor-button elementor-button-link elementor-size-sm"
+                            href="/zaloguj-sie/"
+                          >
+                            <span className="elementor-button-content-wrapper">
+                              <span className="elementor-button-text">Zaloguj się</span>
+                            </span>
+                          </Link>
+                        </div>
                       </div>
                     </div>
 
@@ -188,6 +204,11 @@ export function NativePreviewHeader() {
                             </Link>
                           </li>
                           <MegaMenu />
+                          <li className="menu-item">
+                            <Link href="/wpisy/" className="elementor-item" tabIndex={-1}>
+                              Wpisy
+                            </Link>
+                          </li>
                         </ul>
                       </nav>
                     </div>
