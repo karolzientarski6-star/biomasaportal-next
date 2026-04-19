@@ -1660,12 +1660,13 @@ img {
 }
 
 .native-site-header__toggle {
-  display: none;
+  display: none !important;
   width: 48px;
   height: 48px;
   padding: 0;
   border: 0;
   background: transparent;
+  color: #fff !important;
   cursor: pointer;
 }
 
@@ -1675,7 +1676,7 @@ img {
   height: 2px;
   margin: 4px auto;
   border-radius: 999px;
-  background: #fff;
+  background: #fff !important;
 }
 
 .native-site-header__mobile-overlay {
@@ -3192,7 +3193,7 @@ img {
   }
 
   .native-site-header__toggle {
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
   }
