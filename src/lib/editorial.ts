@@ -491,6 +491,33 @@ export function sanitizeEditorialHtml(html: string, hints: string[] = []) {
     }
   });
 
+  // Style .cta-box elements that were generated without inline styles.
+  // The AI uses class="cta-box" but there's no matching CSS in the WP template —
+  // apply inline styles so the CTA renders as a proper card with a button.
+  $(".cta-box").each((_, element) => {
+    const box = $(element);
+    box.attr(
+      "style",
+      "display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;" +
+      "background:linear-gradient(135deg,#e8f4ed 0%,#f0f7f3 100%);" +
+      "border:1.5px solid #b8d9c5;border-radius:14px;padding:20px 24px;margin:28px 0;",
+    );
+
+    // Style the inner <p> (text)
+    box.find("p").attr(
+      "style",
+      "margin:0;color:#173126;font-weight:600;font-size:15px;line-height:1.5;flex:1;min-width:180px;",
+    );
+
+    // Style the inner <a> as a button
+    box.find("a").attr(
+      "style",
+      "display:inline-block;background:#2d5c3f;color:#fff;font-weight:700;" +
+      "font-size:13px;letter-spacing:.3px;padding:10px 22px;border-radius:8px;" +
+      "text-decoration:none;white-space:nowrap;flex-shrink:0;",
+    );
+  });
+
   return $.root().html() ?? html;
 }
 
