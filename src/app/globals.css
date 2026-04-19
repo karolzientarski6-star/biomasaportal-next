@@ -1471,6 +1471,499 @@ img {
   min-height: 100vh;
 }
 
+.native-homepage {
+  display: grid;
+  gap: 0;
+  background: #fff;
+}
+
+.native-home-section__inner {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.native-home-hero {
+  padding: 44px 0 56px;
+  background:
+    radial-gradient(circle at top left, rgba(243, 168, 20, 0.12), transparent 28%),
+    linear-gradient(180deg, #fff 0%, #fbfaf5 100%);
+}
+
+.native-home-hero__inner {
+  display: grid;
+  gap: 34px;
+}
+
+.native-home-hero__intro {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 30px;
+}
+
+.native-home-hero__logo img {
+  display: block;
+  width: 132px;
+  height: 132px;
+  object-fit: contain;
+}
+
+.native-home-hero__content h1 {
+  margin: 0;
+  color: #0f5c3d;
+  font-family: "Raleway", sans-serif;
+  font-size: clamp(2rem, 3.6vw, 3.55rem);
+  line-height: 1.02;
+}
+
+.native-home-hero__content > div:last-child {
+  max-width: 820px;
+  color: #4d6257;
+  line-height: 1.8;
+}
+
+.native-home-hero__divider {
+  width: 84px;
+  height: 4px;
+  margin: 20px 0 18px;
+  border-radius: 999px;
+  background: #f3a814;
+}
+
+.native-home-hero__list .biomasa-latest-ogloszenia {
+  margin: 0;
+}
+
+.native-home-hero .biomasa-latest-ogloszenia .section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.native-home-hero .biomasa-latest-ogloszenia .section-header h2 {
+  margin: 0;
+  color: #143929;
+  font-family: "Raleway", sans-serif;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+}
+
+.native-home-hero .biomasa-latest-ogloszenia .view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #f3a814;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.native-home-hero .biomasa-latest-ogloszenia .view-all:hover {
+  gap: 12px;
+}
+
+.native-home-hero .ogloszenia-grid-home {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.native-home-hero .ogloszenie-card-home {
+  overflow: hidden;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 16px 34px rgba(16, 48, 34, 0.08);
+}
+
+.native-home-hero .ogloszenie-card-home .card-link {
+  display: grid;
+  min-height: 100%;
+  grid-template-rows: auto 1fr;
+  color: inherit;
+  text-decoration: none;
+}
+
+.native-home-hero .ogloszenie-card-home .card-image {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #edf2ee;
+}
+
+.native-home-hero .ogloszenie-card-home .card-image img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.native-home-hero .ogloszenie-card-home .card-content {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 16px;
+}
+
+.native-home-hero .ogloszenie-card-home .card-title {
+  margin: 0;
+  color: #173126;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.native-home-hero .ogloszenie-card-home .card-price {
+  color: #0f5c3d;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.native-home-hero .ogloszenie-card-home .card-meta {
+  display: grid;
+  gap: 6px;
+  color: #5f6f64;
+  font-size: 13px;
+}
+
+.native-home-hero .meta-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.native-home-forest {
+  padding: 36px 0;
+}
+
+.native-home-forest__inner {
+  padding: 44px 50px;
+  border-radius: 28px;
+  background:
+    linear-gradient(90deg, rgba(11, 71, 46, 0.96), rgba(11, 71, 46, 0.88)),
+    url("/wp-content/uploads/2024/01/Fotolia_69675440_Subscription_Monthly_M.jpg") center/cover;
+  box-shadow: 0 26px 48px rgba(16, 48, 34, 0.18);
+}
+
+.native-home-forest__content {
+  max-width: 560px;
+}
+
+.native-home-forest__eyebrow {
+  margin: 0 0 10px;
+  color: #f3a814;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.native-home-forest__content h2 {
+  margin: 0;
+  color: #fff;
+  font-family: "Raleway", sans-serif;
+  font-size: clamp(2rem, 3.2vw, 3rem);
+  line-height: 1.05;
+}
+
+.native-home-forest__content h2 span {
+  color: #f3a814;
+}
+
+.native-home-forest__content p {
+  margin: 18px 0 0;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.8;
+}
+
+.native-home-forest__button,
+.native-home-latest-posts__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  margin-top: 22px;
+  padding: 0 20px;
+  border-radius: 6px;
+  background: #f3a814;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.native-home-latest-posts {
+  position: relative;
+  padding: 70px 0 56px;
+  background: #fff;
+}
+
+.native-home-latest-posts::before,
+.native-home-about::before,
+.native-home-partners::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 34px;
+  background:
+    radial-gradient(circle at 0 0, transparent 32px, #f4f1ea 33px) left top/50% 100% repeat-x;
+  opacity: 0.35;
+}
+
+.native-home-latest-posts__inner,
+.native-home-about__inner,
+.native-home-partners__inner {
+  position: relative;
+}
+
+.native-home-latest-posts__header,
+.native-home-about__header,
+.native-home-partners__header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 18px;
+}
+
+.native-home-latest-posts__brand img,
+.native-home-about__logo img,
+.native-home-partners__logo img {
+  display: block;
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+}
+
+.native-home-latest-posts__title-block h2,
+.native-home-about__title h2,
+.native-home-partners__title h2,
+.native-home-brand h2,
+.native-home-community__copy h2 {
+  margin: 0;
+  color: #143929;
+  font-family: "Raleway", sans-serif;
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.06;
+}
+
+.native-home-latest-posts__divider,
+.native-home-about__divider,
+.native-home-partners__divider {
+  height: 3px;
+  width: 100%;
+  margin: 18px 0 28px;
+  background: linear-gradient(90deg, #f3a814 0 120px, rgba(23, 49, 38, 0.12) 120px);
+}
+
+.native-home-latest-posts__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px;
+}
+
+.native-home-post-card__card {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  overflow: hidden;
+  border: 2px solid #e2d52f;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+}
+
+.native-home-post-card__thumbnail {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+}
+
+.native-home-post-card__thumbnail img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.native-home-post-card__badge {
+  justify-self: start;
+  margin: 12px 14px 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #0b6a43;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.native-home-post-card__body {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  padding: 14px 15px 20px;
+}
+
+.native-home-post-card__body h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.native-home-post-card__body h3 a {
+  color: #0b6a43;
+  text-decoration: none;
+}
+
+.native-home-post-card__body p {
+  margin: 0;
+  color: #2d5c3f;
+  line-height: 1.7;
+}
+
+.native-home-post-card__read-more {
+  color: #000;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.7;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.native-home-post-card__meta {
+  margin-top: auto;
+  padding: 10px 15px;
+  border-top: 1px solid #e2d52f;
+  color: #adadad;
+  font-size: 12px;
+}
+
+.native-home-latest-posts__cta {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 28px;
+}
+
+.native-home-community {
+  padding: 40px 0 48px;
+  background:
+    linear-gradient(rgba(9, 105, 67, 0.94), rgba(9, 105, 67, 0.94)),
+    url("/wp-content/uploads/2024/01/Projekt-bez-nazwy-52.png") center/cover;
+}
+
+.native-home-community__inner {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(280px, 420px) minmax(260px, 0.8fr);
+  align-items: center;
+  gap: 32px;
+}
+
+.native-home-community__copy h2,
+.native-home-community__secondary h3 {
+  color: #fff;
+}
+
+.native-home-community__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  margin-top: 24px;
+  padding: 0 22px;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.native-home-community__button-icon {
+  display: inline-flex;
+}
+
+.native-home-community__button svg {
+  fill: currentColor;
+}
+
+.native-home-community__phone img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.native-home-community__secondary {
+  text-align: center;
+}
+
+.native-home-community__secondary h3 {
+  margin: 0;
+  font-family: "Raleway", sans-serif;
+  font-size: clamp(1.65rem, 2.5vw, 2.5rem);
+  line-height: 1.1;
+}
+
+.native-home-community__button--mobile {
+  display: none;
+}
+
+.native-home-about,
+.native-home-partners {
+  position: relative;
+  padding: 72px 0 64px;
+  background: #fff;
+}
+
+.native-home-about__content {
+  max-width: 920px;
+}
+
+.native-home-about__content p {
+  margin: 0 0 16px;
+  color: #2f4237;
+  line-height: 1.8;
+}
+
+.native-home-brand {
+  padding: 70px 0;
+  background:
+    linear-gradient(rgba(78, 158, 67, 0.1), rgba(78, 158, 67, 0.1)),
+    url("/wp-content/uploads/2024/01/biomasa-sklep.jpg") center/cover;
+}
+
+.native-home-brand h2 {
+  max-width: 520px;
+  color: #fff;
+  font-size: clamp(3rem, 7vw, 5.8rem);
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.native-home-partners__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 30px;
+  align-items: center;
+}
+
+.native-home-partners__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.native-home-partners__item a {
+  display: block;
+  width: min(75%, 280px);
+}
+
+.native-home-partners__item img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .native-site-header {
   position: sticky;
   top: 0;
@@ -3198,6 +3691,33 @@ img {
     justify-content: center;
   }
 
+  .native-home-hero .ogloszenia-grid-home,
+  .native-home-latest-posts__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .native-home-community__inner {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .native-home-community__copy,
+  .native-home-community__secondary {
+    justify-self: center;
+  }
+
+  .native-home-community__button--mobile {
+    display: inline-flex;
+  }
+
+  .native-home-community__copy .native-home-community__button {
+    display: none;
+  }
+
+  .native-home-partners__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .native-site-footer__top,
   .native-site-footer__middle,
   .native-site-footer__bottom {
@@ -3296,6 +3816,54 @@ img {
 
   .native-site-header__mobile-cluster-grid {
     grid-template-columns: 1fr;
+  }
+
+  .native-home-hero {
+    padding: 28px 0 42px;
+  }
+
+  .native-home-hero__intro,
+  .native-home-latest-posts__header,
+  .native-home-about__header,
+  .native-home-partners__header {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .native-home-hero .biomasa-latest-ogloszenia .section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .native-home-hero .ogloszenia-grid-home,
+  .native-home-latest-posts__grid,
+  .native-home-partners__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .native-home-forest__inner {
+    padding: 30px 24px;
+  }
+
+  .native-home-community {
+    padding: 30px 0 34px;
+  }
+
+  .native-home-community__secondary h3 {
+    font-size: 2rem;
+  }
+
+  .native-home-about,
+  .native-home-partners {
+    padding: 56px 0 48px;
+  }
+
+  .native-home-brand {
+    padding: 48px 0;
+  }
+
+  .native-home-brand h2 {
+    font-size: 3.3rem;
   }
 
   .site-header__inner {
